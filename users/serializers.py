@@ -1,13 +1,16 @@
 from rest_framework import serializers
-from .models import User, Log, Cidadao, FuncionarioJudicial
+from .models import Log, Cidadao, FuncionarioJudicial
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email']
-        # extra_kwargs = {'senha': {'write_only': True}}
+        fields = ['email', 'last_login', 'username', 'first_name', 'last_name', ]
 
 
 class LogSerializer(serializers.ModelSerializer):
