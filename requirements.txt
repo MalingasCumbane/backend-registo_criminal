@@ -1,0 +1,7 @@
+asgiref==3.8.1
+django==4.2.21
+django-currentuser==0.9.0
+djangorestframework==3.16.0
+pytz==2025.2
+sqlparse==0.5.3
+typing-extensions==4.13.2
