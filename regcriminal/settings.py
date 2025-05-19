@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-xwzc$)rtqas7s6xd!eimwe&to-zr^hvlw#e+^@@miog9l-q)18
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -57,6 +57,7 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -84,6 +85,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'regcriminal.wsgi.application'
 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']  # Adicione seu domínio se necessário
+CSRF_COOKIE_SECURE = False 
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

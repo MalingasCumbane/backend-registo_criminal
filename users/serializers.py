@@ -33,6 +33,7 @@ class FuncionarioJudicialSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    print("LOGIN SERIALIZER")
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 

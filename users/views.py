@@ -8,11 +8,16 @@ from .serializers import *
 from .models import User, Log, Cidadao, FuncionarioJudicial
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 
 
 class LoginView(APIView):
+    @csrf_exempt  # Isenta a view da verificação de CSRF
     def post(self, request):
+        
+        print("REQUEST: ", request.data)
+
         serializer = LoginSerializer(data=request.data, context={'request': request})
         
         if serializer.is_valid():
