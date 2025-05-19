@@ -20,7 +20,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     nome_completo = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    senha = models.CharField(max_length=255)  # Note: In practice, use password field from AbstractBaseUser
+    senha = models.CharField(max_length=255)
     telefone = models.CharField(max_length=20)
     TIPO_UTILIZADOR_CHOICES = [
         ('CIDADAO', 'Cidadão'),
