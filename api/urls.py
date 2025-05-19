@@ -1,7 +1,7 @@
-from django.urls import path
+from django.urls import path, include
 from users.views import LoginView
-
-
+from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoListCreateView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
+from core.views import SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView
 app_name = "api"
 urlpatterns = [
     # Autenticação

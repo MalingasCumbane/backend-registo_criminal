@@ -5,6 +5,9 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .serializers import LoginSerializer, UserSerializer
 from .serializers import *
+from .models import User, Log, Cidadao, FuncionarioJudicial
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 
 
