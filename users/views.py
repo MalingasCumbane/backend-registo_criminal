@@ -5,34 +5,31 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .serializers import LoginSerializer, UserSerializer
 from .serializers import *
-from .models import User, Log, Cidadao, FuncionarioJudicial
+from .models import Log, Cidadao, FuncionarioJudicial
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import get_user_model
 
+
+User = get_user_model()
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        print("request: ", request.data)
-        
         if not email or not password:
             return Response(
                 {'error': 'Email e password são obrigatórios'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            print("email: ", email )
-            return Response({'error': 'Utilizador não encontrado'}, status=status.HTTP_404_NOT_FOUND )
-
-        user = authenticate(username=email, password=password)
+        user = authenticate(request=request, username=email, password=password)
         if not user:
             return Response(
                 {'error': 'Credenciais inválidas'},
@@ -40,11 +37,12 @@ class LoginView(APIView):
             )
 
         token, created = Token.objects.get_or_create(user=user)
+        user_serializer = UserSerializer(user)
         return Response({
             'token': token.key,
-            'user_id': user.pk,
-            'email': user.email
+            'user': user_serializer.data
         }, status=status.HTTP_200_OK)
+
 
     
 class UserListCreateView(APIView):

@@ -6,8 +6,8 @@ from django.contrib.auth import authenticate
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'nome_completo', 'email', 'telefone', 'tipo_utilizador', 'data_criacao']
-        extra_kwargs = {'senha': {'write_only': True}}
+        fields = ['id', 'email']
+        # extra_kwargs = {'senha': {'write_only': True}}
 
 
 class LogSerializer(serializers.ModelSerializer):

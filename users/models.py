@@ -20,7 +20,6 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     nome_completo = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    senha = models.CharField(max_length=255)
     telefone = models.CharField(max_length=20)
     TIPO_UTILIZADOR_CHOICES = [
         ('CIDADAO', 'Cidadão'),
@@ -35,7 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['nome_completo']
+    # REQUIRED_FIELDS = ['nome_completo']
 
     groups = models.ManyToManyField('auth.Group', verbose_name='groups', blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name="custom_user_set", related_query_name="user",)
     user_permissions = models.ManyToManyField('auth.Permission', verbose_name='user permissions', blank=True, help_text='Specific permissions for this user.', related_name="custom_user_set", related_query_name="user" )
