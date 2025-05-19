@@ -13,25 +13,39 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 class LoginView(APIView):
-    @csrf_exempt  # Isenta a view da verificação de CSRF
-    def post(self, request):
-        
-        print("REQUEST: ", request.data)
 
-        serializer = LoginSerializer(data=request.data, context={'request': request})
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        print("request: ", request.data)
         
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            token, created = Token.objects.get_or_create(user=user)
-            
-            user_data = UserSerializer(user).data
-            
-            return Response({
-                'token': token.key,
-                'user': user_data
-            }, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not password:
+            return Response(
+                {'error': 'Email e password são obrigatórios'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            print("email: ", email )
+            return Response({'error': 'Utilizador não encontrado'}, status=status.HTTP_404_NOT_FOUND )
+
+        user = authenticate(username=email, password=password)
+        if not user:
+            return Response(
+                {'error': 'Credenciais inválidas'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'email': user.email
+        }, status=status.HTTP_200_OK)
+
     
 class UserListCreateView(APIView):
     permission_classes = [IsAuthenticated]
