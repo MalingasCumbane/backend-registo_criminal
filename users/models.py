@@ -18,7 +18,6 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    id = models.AutoField(primary_key=True)
     nome_completo = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     senha = models.CharField(max_length=255)  # Note: In practice, use password field from AbstractBaseUser
@@ -46,7 +45,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     
 
 class Log(models.Model):
-    id = models.AutoField(primary_key=True)
     utilizador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='logs')
     acao = models.CharField(max_length=255)
     data_hora = models.DateTimeField(auto_now_add=True)

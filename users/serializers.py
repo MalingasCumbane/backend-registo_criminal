@@ -32,8 +32,6 @@ class FuncionarioJudicialSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -43,8 +41,7 @@ class LoginSerializer(serializers.Serializer):
         password = data.get('password')
 
         if email and password:
-            user = authenticate(request=self.context.get('request'),
-                               username=email, password=password)
+            user = authenticate(request=self.context.get('request'), username=email, password=password)
             if not user:
                 raise serializers.ValidationError('Credenciais inválidas')
         else:
