@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'core',
     'users',
     'knox',
-
     'rest_framework',
     # 'rest_framework.authtoken',
 
