@@ -1,16 +1,16 @@
 from rest_framework import serializers
-from .models import Log, Cidadao, FuncionarioJudicial
+from .models import Log, Cidadao, FuncionarioJudicial, User
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'last_login', 'username', 'first_name', 'last_name', ]
+        fields = ['email', ]
 
 
 class LogSerializer(serializers.ModelSerializer):
@@ -36,20 +36,10 @@ class FuncionarioJudicialSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    print("LOGIN SERIALIZER")
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    user_name = serializers.CharField()  
+    password = serializers.CharField(max_length=128, min_length=6, write_only=True)
 
-    def validate(self, data):
-        email = data.get('email')
-        password = data.get('password')
-
-        if email and password:
-            user = authenticate(request=self.context.get('request'), username=email, password=password)
-            if not user:
-                raise serializers.ValidationError('Credenciais inválidas')
-        else:
-            raise serializers.ValidationError('Email e password são obrigatórios')
-
-        data['user'] = user
-        return data
+    class Meta:
+        model = User
+        fields = ('password', 'token')
+        read_only_fields = ['token']

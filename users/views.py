@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -11,40 +12,61 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
+from django.utils.decorators import method_decorator
+from rest_framework import response, status, permissions
+from knox.models import AuthToken
 
 
-User = get_user_model()
 
+# User = get_user_model()
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginView(GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = LoginSerializer
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
 
-        print("request: ", request.data)
-        email = request.data.get('email')
-        password = request.data.get('password')
+        print("Headers:", request.headers)
+        print("Data:", request.data)       
 
-        if not email or not password:
-            return Response(
-                {'error': 'Email e password são obrigatórios'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        try:
+            data = request.data
+            user_name = data.get('user_name')
+            password = data.get('password')
 
-        user = authenticate(request=request, username=email, password=password)
-        if not user:
-            return Response(
-                {'error': 'Credenciais inválidas'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            user = authenticate(username=user_name, password=password)
 
-        token, created = Token.objects.get_or_create(user=user)
-        user_serializer = UserSerializer(user)
-        return Response({
-            'token': token.key,
-            'user': user_serializer.data
-        }, status=status.HTTP_200_OK)
+            if not user:
+                return self._invalid_credentials_response()
+            
+            return self._generate_login_response(user)
 
+        except Exception as e:
+            return self._server_error_response(e)
+        
+    def _generate_login_response(self, user):
+            token = AuthToken.objects.create(user)[1]
+            serializer = UserSerializer(user)
+            
+            return response.Response({
+                'token': token,
+                'user': serializer.data,
+                'message': 'Login realizado com sucesso'
+            }, status=status.HTTP_200_OK)
+
+    def _invalid_credentials_response(self):
+        return response.Response(
+            {'message': 'Credenciais inválidas, tente novamente'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    def _server_error_response(self, error):
+        """Resposta para erros internos do servidor"""
+        return response.Response(
+            {'message': 'Ocorreu um erro no servidor', 'error': str(error)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     
 class UserListCreateView(APIView):

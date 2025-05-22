@@ -5,3 +5,5 @@ djangorestframework==3.16.0
 pytz==2025.2
 sqlparse==0.5.3
 typing-extensions==4.13.2
+knox==0.1.14
+django-rest-knox==5.0.1

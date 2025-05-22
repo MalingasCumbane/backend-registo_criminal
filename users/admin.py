@@ -2,29 +2,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User, Log, Cidadao, FuncionarioJudicial
 
-# Register your models here.
-
-class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'nome_completo', 'telefone', 'tipo_utilizador', 'data_criacao', 'is_active')
-    list_filter = ('tipo_utilizador', 'is_active', 'data_criacao')
-    search_fields = ('email', 'nome_completo', 'telefone')
-    ordering = ('-data_criacao',)
-    filter_horizontal = ()
-    
-    fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Informação Pessoal', {'fields': ('nome_completo', 'telefone')}),
-        ('Permissões', {'fields': ('tipo_utilizador', 'is_active', 'is_staff', 'is_superuser')}),
-        ('Datas Importantes', {'fields': ('last_login', 'data_criacao')}),
-    )
-    
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'nome_completo', 'telefone', 'tipo_utilizador', 'password1', 'password2'),
-        }),
-    )
-
 # Configuração para o model Log
 class LogAdmin(admin.ModelAdmin):
     list_display = ('id', 'acao', 'utilizador', 'data_hora', 'ip')
@@ -48,7 +25,7 @@ class FuncionarioJudicialAdmin(admin.ModelAdmin):
     raw_id_fields = ('utilizador',)
 
 
-admin.site.register(User, CustomUserAdmin)
+admin.site.register(User)
 admin.site.register(Log, LogAdmin)
 admin.site.register(Cidadao, CidadaoAdmin)
 admin.site.register(FuncionarioJudicial, FuncionarioJudicialAdmin)
