@@ -26,9 +26,6 @@ class LoginView(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
 
-        print("Headers:", request.headers)
-        print("Data:", request.data)       
-
         try:
             data = request.data
             user_name = data.get('user_name')
@@ -196,24 +193,32 @@ class CidadaoSearchAPIView(generics.ListAPIView):
 class CidadaoDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, pk):
-        return get_object_or_404(Cidadao, pk=pk)
+    def get_object(self, bi):
+        print("que tal 1")
+        return get_object_or_404(Cidadao, numero_bi_nuit=bi)
 
-    def get(self, request, pk):
-        cidadao = self.get_object(pk)
+    def get(self, request, bi):
+        print("que tal 2")
+
+        cidadao = self.get_object(bi)
         serializer = CidadaoSerializer(cidadao)
         return Response(serializer.data)
 
-    def put(self, request, pk):
-        cidadao = self.get_object(pk)
+    def put(self, request, bi):
+        print("que tal 3")
+
+        cidadao = self.get_object(bi)
         serializer = CidadaoSerializer(cidadao, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        cidadao = self.get_object(pk)
+    def delete(self, request, bi):
+        print("que tal 4")
+
+        cidadao = self.get_object(bi)
         cidadao.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
