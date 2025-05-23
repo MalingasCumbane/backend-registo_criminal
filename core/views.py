@@ -1,14 +1,16 @@
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistroCriminalSerializer, SolicitarRegistoSerializer, CidadaoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets, permissions
 import datetime
 from users.models import Cidadao
-from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
+from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistroCriminal
+from django.contrib.auth.models import User
+from django.db.models import Count
 
 # Create your views here.
 
@@ -132,44 +134,44 @@ class CertificadoRegistoDetailView(APIView):
         certificado.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-# RegistoCriminal Views
-class RegistoCriminalListCreateView(APIView):
+# RegistroCriminal Views
+class RegistroCriminalListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        registos = RegistoCriminal.objects.all()
-        serializer = RegistoCriminalSerializer(registos, many=True)
+        registros = RegistroCriminal.objects.all()
+        serializer = RegistroCriminalSerializer(registros, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = RegistoCriminalSerializer(data=request.data)
+        serializer = RegistroCriminalSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class RegistoCriminalDetailView(APIView):
+class RegistroCriminalDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
-        return get_object_or_404(RegistoCriminal, pk=pk)
+        return get_object_or_404(RegistroCriminal, pk=pk)
 
     def get(self, request, pk):
-        registo = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registo)
+        registro = self.get_object(pk)
+        serializer = RegistroCriminalSerializer(registro)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        registo = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registo, data=request.data)
+        registro = self.get_object(pk)
+        serializer = RegistroCriminalSerializer(registro, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        registo = self.get_object(pk)
-        registo.delete()
+        registro = self.get_object(pk)
+        registro.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 # ===============================================================
 # ===============================================================
@@ -209,7 +211,7 @@ class GerarCertificadoView(generics.CreateAPIView):
             )
         
         # Gerar conteúdo do certificado
-        registos = solicitacao.cidadao.registos_criminais.all()
+        registos = solicitacao.cidadao.registros_criminais.all()
         tem_registros = registos.exists()
         
         conteudo = {
@@ -245,3 +247,69 @@ class GerarCertificadoView(generics.CreateAPIView):
 
         serializer = self.get_serializer(certificado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# CRUD para Cidadao
+class CidadaoViewSet(viewsets.ModelViewSet):
+    queryset = Cidadao.objects.all()
+    serializer_class = CidadaoSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['nome', 'numero_id']
+
+# CRUD para RegistroCriminal
+class RegistroCriminalViewSet(viewsets.ModelViewSet):
+    queryset = RegistroCriminal.objects.all()
+    serializer_class = RegistroCriminalSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['cidadao', 'status', 'resultado', 'data']
+
+# Dashboard (estatísticas)
+class DashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        registros_emitidos = RegistroCriminal.objects.filter(status='Emitido').count()
+        pesquisas_realizadas = RegistroCriminal.objects.count()
+        cidadaos_processados = Cidadao.objects.annotate(num_reg=Count('registros')).filter(num_reg__gt=0).count()
+        registros_limpos = RegistroCriminal.objects.filter(resultado='Limpo').count()
+        return Response({
+            "registros_emitidos": registros_emitidos,
+            "pesquisas_realizadas": pesquisas_realizadas,
+            "cidadaos_processados": cidadaos_processados,
+            "registros_limpos": registros_limpos,
+        })
+
+# Atividade recente
+class AtividadeRecenteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        ultimos = RegistroCriminal.objects.select_related('cidadao').order_by('-data')[:5]
+        data = [
+            {
+                "id": f"CR-{r.id}",
+                "nome": r.cidadao.nome,
+                "data": r.data,
+                "status": r.status
+            }
+            for r in ultimos
+        ]
+        return Response(data)
+
+# Info (estático)
+class InfoView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        return Response({
+            "sobre": "O Sistema de Registro Criminal é uma plataforma oficial do Ministério da Justiça...",
+            "documentacao": "Acesse manuais de utilização, tutoriais em vídeo...",
+            "faq": "Perguntas frequentes sobre o sistema..."
+        })
+
+# Dados do usuário logado
+class UserMeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        return Response({
+            "username": user.username,
+            "nome": user.get_full_name() or user.username,
+            "cargo": "Oficial de Registros"
+        })
