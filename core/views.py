@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, CriminalRecordSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,6 +9,9 @@ from rest_framework import generics, status
 import datetime
 from users.models import Cidadao
 from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
+from django.db.models import Count
+from django.utils import timezone
+from django.db.models import Q
 
 # Create your views here.
 
@@ -245,3 +248,35 @@ class GerarCertificadoView(generics.CreateAPIView):
 
         serializer = self.get_serializer(certificado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+
+class CriminalRecordListView(generics.ListAPIView):
+    serializer_class = CriminalRecordSerializer
+    
+    def get_queryset(self):
+        queryset = RegistoCriminal.objects.all()
+        
+        # Search functionality
+        search_term = self.request.query_params.get('search', None)
+        if search_term:
+            queryset = queryset.filter(
+                Q(record_id__icontains=search_term) |
+                Q(citizen__icontains=search_term) |
+                Q(citizen_id__icontains=search_term)
+            )
+            
+        return queryset.order_by('-id')
+
+class RecordStatsView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        today = timezone.now().date()
+        
+        stats = {
+            'total_records': RegistoCriminal.objects.count(),
+            'unique_citizens': RegistoCriminal.objects.values('cidadao_id').distinct().count(),
+            # 'with_records': RegistoCriminal.objects.filter(has_criminal_record=True).count(),
+            'today_records': RegistoCriminal.objects.filter(created_at=today).count(),
+        }
+        
+        return Response(stats)

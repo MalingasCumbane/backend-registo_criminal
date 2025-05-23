@@ -10,13 +10,6 @@ class LogAdmin(admin.ModelAdmin):
     date_hierarchy = 'data_hora'
     readonly_fields = ('data_hora',)
 
-# Configuração para o model Cidadao
-class CidadaoAdmin(admin.ModelAdmin):
-    list_display = ('numero_bi_nuit', 'utilizador', 'provincia', 'distrito')
-    search_fields = ('numero_bi_nuit', 'utilizador__nome_completo', 'endereco')
-    list_filter = ('provincia', 'distrito')
-    raw_id_fields = ('utilizador',)
-
 # Configuração para o model FuncionarioJudicial
 class FuncionarioJudicialAdmin(admin.ModelAdmin):
     list_display = ('utilizador', 'cargo', 'departamento', 'nivel_acesso')
@@ -27,5 +20,5 @@ class FuncionarioJudicialAdmin(admin.ModelAdmin):
 
 admin.site.register(User)
 admin.site.register(Log, LogAdmin)
-admin.site.register(Cidadao, CidadaoAdmin)
+admin.site.register(Cidadao)
 admin.site.register(FuncionarioJudicial, FuncionarioJudicialAdmin)

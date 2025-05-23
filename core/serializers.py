@@ -32,5 +32,15 @@ class CidadaoDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cidadao
-        fields = ['numero_bi_nuit', 'utilizador', 'endereco', 'provincia', 
-                 'distrito', 'data_nascimento', 'registos_criminais']
+        fields = '__all__'
+        
+
+class CriminalRecordSerializer(serializers.ModelSerializer):
+    # id = serializers.CharField(source='record_id')
+    # date = serializers.DateField(source='issue_date')
+    cidadao = CidadaoDetailSerializer()
+    
+    class Meta:
+        model = RegistoCriminal
+        fields = '__all__'
+        # read_only_fields = fields
