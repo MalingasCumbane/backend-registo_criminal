@@ -1,7 +1,7 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
-from core.views import SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView
+from core.views import GerarCertificadoView, SolicitarRegistoCreateView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView
 
 
 app_name = "api"
@@ -44,4 +44,10 @@ urlpatterns = [
     
     # Autenticação da API
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+
+    path('cidadaos/<str:bi>/', CidadaoDetailView.as_view(), name='cidadao-detail'),
+    path('solicitacoes/<str:bi>/', SolicitarRegistoCreateView.as_view(), name='solicitar-registo'),
+    path('certificados/<int:pk>/gerar/', GerarCertificadoView.as_view(), name='gerar-certificado'),
+
 ]

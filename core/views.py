@@ -1,10 +1,13 @@
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+import datetime
+from users.models import Cidadao
 from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
 
 # Create your views here.
@@ -47,6 +50,7 @@ class SolicitarRegistoDetailView(APIView):
         solicitacao = self.get_object(pk)
         solicitacao.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 # Pagamento Views
 class PagamentoListCreateView(APIView):
@@ -167,3 +171,77 @@ class RegistoCriminalDetailView(APIView):
         registo = self.get_object(pk)
         registo.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+# ===============================================================
+# ===============================================================
+# ===============================================================
+# ===============================================================
+# ===============================================================
+# ===============================================================
+class CidadaoDetailView(generics.RetrieveAPIView):
+    queryset = Cidadao.objects.all()
+    serializer_class = CidadaoDetailSerializer
+    lookup_field = 'numero_bi_nuit'
+    permission_classes = [IsAuthenticated]
+
+class SolicitarRegistoCreateView(generics.CreateAPIView):
+    queryset = SolicitarRegisto.objects.all()
+    serializer_class = SolicitarRegistoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(
+            cidadao=get_object_or_404(Cidadao, numero_bi_nuit=self.kwargs['bi']),
+            funcionario=self.request.user.funcionario
+        )
+
+class GerarCertificadoView(generics.CreateAPIView):
+    serializer_class = CertificadoRegistoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
+        
+        # Verificar se já existe certificado
+        if hasattr(solicitacao, 'certificado'):
+            return Response(
+                {'error': 'Já existe um certificado para esta solicitação'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Gerar conteúdo do certificado
+        registos = solicitacao.cidadao.registos_criminais.all()
+        tem_registros = registos.exists()
+        
+        conteudo = {
+            "cidadao": {
+                "nome": solicitacao.cidadao.utilizador.full_name,
+                "bi": solicitacao.cidadao.numero_bi_nuit,
+                "nascimento": solicitacao.cidadao.data_nascimento,
+                "endereco": solicitacao.cidadao.endereco
+            },
+            "tem_registros": tem_registros,
+            "registros": [
+                {
+                    "processo": r.numero_processo,
+                    "data": r.data_ocorrencia,
+                    "tipo": r.get_tipo_ocorrencia_display(),
+                    "sentenca": r.setenca
+                } for r in registos
+            ],
+            "validade": (datetime.date.today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d')
+        }
+
+        certificado = CertificadoRegisto.objects.create(
+            solicitacao=solicitacao,
+            data_validade=datetime.date.today() + datetime.timedelta(days=90),
+            numero_referencia=f"CR-{solicitacao.id}-{datetime.datetime.now().strftime('%Y%m%d')}",
+            conteudo=conteudo,
+            funcionario_emissor=request.user.funcionario
+        )
+
+        # Atualizar estado da solicitação
+        solicitacao.estado = 'APROVADO'
+        solicitacao.save()
+
+        serializer = self.get_serializer(certificado)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
