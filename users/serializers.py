@@ -20,6 +20,9 @@ class LogSerializer(serializers.ModelSerializer):
 
 
 class CidadaoSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='utilizador.full_name', read_only=True)
+    email = serializers.CharField(source='utilizador.email', read_only=True)
+    
     utilizador = UserSerializer()
     
     class Meta:

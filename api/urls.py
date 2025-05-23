@@ -1,6 +1,6 @@
 from django.urls import path, include
-from users.views import LoginView
-from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoListCreateView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
+from users.views import CidadaoSearchAPIView, LoginView
+from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
 from core.views import SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView
 
 
@@ -18,7 +18,8 @@ urlpatterns = [
     path('logs/<int:pk>/', LogDetailView.as_view(), name='log-detail'),
     
     # Cidadãos
-    path('cidadaos/', CidadaoListCreateView.as_view(), name='cidadao-list'),
+    # path('cidadaos/', CidadaoListCreateView.as_view(), name='cidadao-list'),
+    path('cidadaos/search/', CidadaoSearchAPIView.as_view(), name='cidadao-search'),
     path('cidadaos/<int:pk>/', CidadaoDetailView.as_view(), name='cidadao-detail'),
     
     # Funcionários Judiciais

@@ -13,10 +13,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
-from rest_framework import response, status, permissions
+from rest_framework import response,generics, status, permissions
 from knox.models import AuthToken
-
-
+from django.db.models import Q
 
 # User = get_user_model()
 
@@ -147,20 +146,52 @@ class LogDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # Cidadao Views
-class CidadaoListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+class CidadaoSearchAPIView(generics.ListAPIView):
+    permission_classes = []
+    serializer_class = CidadaoSerializer
 
-    def get(self, request):
-        cidadaos = Cidadao.objects.all()
-        serializer = CidadaoSerializer(cidadaos, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        search_query = self.request.query_params.get('q', '')
+        search_type = self.request.query_params.get('type', 'bi')
+        
+        queryset = Cidadao.objects.all()
+        
+        if search_query:
+            if search_type == 'bi':
+                queryset = queryset.filter(
+                    Q(numero_bi_nuit__icontains=search_query)
+                )
+            else:
+                queryset = queryset.filter(
+                    Q(utilizador__full_name__icontains=search_query)
+                )
+        
+        return queryset.order_by('utilizador__full_name')
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            
+            return Response({
+                'success': True,
+                'count': queryset.count(),
+                'results': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request):
-        serializer = CidadaoSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # def post(self, request):
+    #     serializer = CidadaoSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CidadaoDetailView(APIView):
     permission_classes = [IsAuthenticated]
