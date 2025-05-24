@@ -148,22 +148,21 @@ class CidadaoSearchAPIView(generics.ListAPIView):
     serializer_class = CidadaoSerializer
 
     def get_queryset(self):
+
         search_query = self.request.query_params.get('q', '')
         search_type = self.request.query_params.get('type', 'bi')
         
         queryset = Cidadao.objects.all()
         
         if search_query:
+
             if search_type == 'bi':
-                queryset = queryset.filter(
-                    Q(numero_bi_nuit__icontains=search_query)
-                )
+                print("")
+                queryset = queryset.filter( Q(numero_bi_nuit__icontains=search_query) )
             else:
-                queryset = queryset.filter(
-                    Q(utilizador__full_name__icontains=search_query)
-                )
+                queryset = queryset.filter( Q(full_name__icontains=search_query) )
         
-        return queryset.order_by('utilizador__full_name')
+        return queryset.order_by('full_name')
     
     def list(self, request, *args, **kwargs):
         try:
@@ -194,18 +193,15 @@ class CidadaoDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self, bi):
-        print("que tal 1")
         return get_object_or_404(Cidadao, numero_bi_nuit=bi)
 
     def get(self, request, bi):
-        print("que tal 2")
 
         cidadao = self.get_object(bi)
         serializer = CidadaoSerializer(cidadao)
         return Response(serializer.data)
 
     def put(self, request, bi):
-        print("que tal 3")
 
         cidadao = self.get_object(bi)
         serializer = CidadaoSerializer(cidadao, data=request.data)
@@ -216,7 +212,6 @@ class CidadaoDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, bi):
-        print("que tal 4")
 
         cidadao = self.get_object(bi)
         cidadao.delete()

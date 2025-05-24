@@ -20,5 +20,9 @@ class FuncionarioJudicialAdmin(admin.ModelAdmin):
 
 admin.site.register(User)
 admin.site.register(Log, LogAdmin)
-admin.site.register(Cidadao)
 admin.site.register(FuncionarioJudicial, FuncionarioJudicialAdmin)
+
+
+@admin.register(Cidadao)
+class CredelecCounterByHome(admin.ModelAdmin):
+    list_display = ['id', "full_name", "numero_bi_nuit", "endereco", 'nacionalidade', "provincia", "distrito", "data_nascimento"]

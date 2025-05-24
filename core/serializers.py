@@ -21,11 +21,17 @@ class CertificadoRegistoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CidadaoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cidadao
+        fields = '__all__'
+
 class RegistoCriminalSerializer(serializers.ModelSerializer):
+    cidadao = CidadaoSerializer(read_only=True) 
+    
     class Meta:
         model = RegistoCriminal
         fields = '__all__'
-
 
 class CidadaoDetailSerializer(serializers.ModelSerializer):
     registos_criminais = RegistoCriminalSerializer(many=True, read_only=True)
@@ -36,11 +42,8 @@ class CidadaoDetailSerializer(serializers.ModelSerializer):
         
 
 class CriminalRecordSerializer(serializers.ModelSerializer):
-    # id = serializers.CharField(source='record_id')
-    # date = serializers.DateField(source='issue_date')
     cidadao = CidadaoDetailSerializer()
     
     class Meta:
         model = RegistoCriminal
         fields = '__all__'
-        # read_only_fields = fields

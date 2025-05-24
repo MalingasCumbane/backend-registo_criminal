@@ -84,3 +84,4 @@ class RegistoCriminal(LifeCycle):
 
     def __str__(self):
         return f"Registo #{self.numero_processo} - {self.cidadao}"
+    

@@ -10,6 +10,9 @@ class SolicitarRegistoAdmin(admin.ModelAdmin):
     date_hierarchy = 'data_solicitacao'
     raw_id_fields = ('cidadao',)
 
+
+
+
 # Configuração para o model Pagamento
 class PagamentoAdmin(admin.ModelAdmin):
     list_display = ('id', 'solicitacao', 'valor', 'metodo', 'estado', 'data_pagamento')
@@ -39,6 +42,10 @@ admin.site.register(SolicitarRegisto, SolicitarRegistoAdmin)
 admin.site.register(Pagamento, PagamentoAdmin)
 admin.site.register(CertificadoRegisto, CertificadoRegistoAdmin)
 admin.site.register(RegistoCriminal, RegistoCriminalAdmin)
+
+
+
+
 
 admin.site.site_header = "Sistema de Registro Criminal"
 admin.site.site_title = "Administração do Sistema"

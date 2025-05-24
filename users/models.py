@@ -127,6 +127,7 @@ class Cidadao(models.Model):
     numero_bi_nuit = models.CharField(max_length=50, unique=True)
     endereco = models.TextField()
     provincia = models.CharField(max_length=100)
+    nacionalidade = models.CharField(max_length=100, null=True)
     distrito = models.CharField(max_length=100)
     data_nascimento = models.DateField()
 
@@ -145,4 +146,4 @@ class FuncionarioJudicial(models.Model):
     nivel_acesso = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.utilizador.nome_completo} - {self.cargo}"
+        return f"{self.utilizador.full_name} - {self.cargo}"

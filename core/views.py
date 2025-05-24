@@ -12,6 +12,7 @@ from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCrim
 from django.db.models import Count
 from django.utils import timezone
 from django.db.models import Q
+from rest_framework.decorators import api_view
 
 # Create your views here.
 
@@ -24,10 +25,14 @@ class SolicitarRegistoListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        print("request.data: ", request.data)
         serializer = SolicitarRegistoSerializer(data=request.data)
         if serializer.is_valid():
+            print("valido sim")
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        print("not valido")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SolicitarRegistoDetailView(APIView):
@@ -180,6 +185,7 @@ class RegistoCriminalDetailView(APIView):
 # ===============================================================
 # ===============================================================
 # ===============================================================
+
 class CidadaoDetailView(generics.RetrieveAPIView):
     queryset = Cidadao.objects.all()
     serializer_class = CidadaoDetailSerializer
@@ -217,7 +223,7 @@ class GerarCertificadoView(generics.CreateAPIView):
         
         conteudo = {
             "cidadao": {
-                "nome": solicitacao.cidadao.utilizador.full_name,
+                "nome": solicitacao.cidadao.full_name,
                 "bi": solicitacao.cidadao.numero_bi_nuit,
                 "nascimento": solicitacao.cidadao.data_nascimento,
                 "endereco": solicitacao.cidadao.endereco
@@ -280,3 +286,31 @@ class RecordStatsView(generics.GenericAPIView):
         }
         
         return Response(stats)
+
+
+
+@api_view(['GET'])
+def get_cidadao_registros(request, id):
+    try:
+        # Get the citizen
+        cidadao = Cidadao.objects.get(numero_bi_nuit=id)
+        
+        # Get all criminal records for this citizen
+        registros = RegistoCriminal.objects.filter(cidadao=cidadao)
+        
+        # Serialize the data
+        serializer = RegistoCriminalSerializer(registros, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except Cidadao.DoesNotExist:
+        return Response(
+            {"error": "Cidadão não encontrado"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
