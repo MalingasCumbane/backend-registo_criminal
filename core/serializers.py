@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from users.models import Cidadao
-from .models import Pagamento, CertificadoRegisto, RegistoCriminal, SolicitarRegisto
+from .models import Pagamento, CertificadoRegisto, RegistroCriminal, SolicitarRegisto
 
 
 class SolicitarRegistoSerializer(serializers.ModelSerializer):
@@ -30,20 +30,21 @@ class RegistoCriminalSerializer(serializers.ModelSerializer):
     cidadao = CidadaoSerializer(read_only=True) 
     
     class Meta:
-        model = RegistoCriminal
+        model = RegistroCriminal
         fields = '__all__'
 
+class RegistoCriminalSerializer(serializers.ModelSerializer):
+    cidadao = CidadaoSerializer(read_only=True)  # Adiciona os dados do cidadão
+    
+    class Meta:
+        model = RegistroCriminal
+        fields = '__all__'
+
+
 class CidadaoDetailSerializer(serializers.ModelSerializer):
-    registos_criminais = RegistoCriminalSerializer(many=True, read_only=True)
+    # registros_criminais = RegistroCriminalSerializer(many=True, read_only=True)
     
     class Meta:
         model = Cidadao
         fields = '__all__'
         
-
-class CriminalRecordSerializer(serializers.ModelSerializer):
-    cidadao = CidadaoDetailSerializer()
-    
-    class Meta:
-        model = RegistoCriminal
-        fields = '__all__'
