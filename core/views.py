@@ -1,6 +1,6 @@
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistroCriminalSerializer, SolicitarRegistoSerializer, CidadaoSerializer
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, CriminalRecordSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, SolicitarRegistoSerializer, CidadaoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,10 +9,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets, permissions
 import datetime
 from users.models import Cidadao
-from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistroCriminal
+from .models import RegistoCriminal, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
 from django.contrib.auth.models import User
 from django.db.models import Count
-from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
+from .models import SolicitarRegisto, Pagamento, CertificadoRegisto
 from django.db.models import Count
 from django.utils import timezone
 from django.db.models import Q
@@ -144,36 +144,36 @@ class CertificadoRegistoDetailView(APIView):
         certificado.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-# RegistroCriminal Views
-class RegistroCriminalListCreateView(APIView):
+# RegistoCriminal Views
+class RegistoCriminalListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        registros = RegistroCriminal.objects.all()
-        serializer = RegistroCriminalSerializer(registros, many=True)
+        registros = RegistoCriminal.objects.all()
+        serializer = RegistoCriminalSerializer(registros, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = RegistroCriminalSerializer(data=request.data)
+        serializer = RegistoCriminalSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class RegistroCriminalDetailView(APIView):
+class RegistoCriminalDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
-        return get_object_or_404(RegistroCriminal, pk=pk)
+        return get_object_or_404(RegistoCriminal, pk=pk)
 
     def get(self, request, pk):
         registro = self.get_object(pk)
-        serializer = RegistroCriminalSerializer(registro)
+        serializer = RegistoCriminalSerializer(registro)
         return Response(serializer.data)
 
     def put(self, request, pk):
         registro = self.get_object(pk)
-        serializer = RegistroCriminalSerializer(registro, data=request.data)
+        serializer = RegistoCriminalSerializer(registro, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -266,69 +266,10 @@ class CidadaoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ['nome', 'numero_id']
 
-# CRUD para RegistroCriminal
-class RegistroCriminalViewSet(viewsets.ModelViewSet):
-    queryset = RegistroCriminal.objects.all()
-    serializer_class = RegistroCriminalSerializer
-    permission_classes = [IsAuthenticated]
-    filterset_fields = ['cidadao', 'status', 'resultado', 'data']
-
-# Dashboard (estatísticas)
-class DashboardView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        registros_emitidos = RegistroCriminal.objects.filter(status='Emitido').count()
-        pesquisas_realizadas = RegistroCriminal.objects.count()
-        cidadaos_processados = Cidadao.objects.annotate(num_reg=Count('registros')).filter(num_reg__gt=0).count()
-        registros_limpos = RegistroCriminal.objects.filter(resultado='Limpo').count()
-        return Response({
-            "registros_emitidos": registros_emitidos,
-            "pesquisas_realizadas": pesquisas_realizadas,
-            "cidadaos_processados": cidadaos_processados,
-            "registros_limpos": registros_limpos,
-        })
-
-# Atividade recente
-class AtividadeRecenteView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        ultimos = RegistroCriminal.objects.select_related('cidadao').order_by('-data')[:5]
-        data = [
-            {
-                "id": f"CR-{r.id}",
-                "nome": r.cidadao.nome,
-                "data": r.data,
-                "status": r.status
-            }
-            for r in ultimos
-        ]
-        return Response(data)
-
-# Info (estático)
-class InfoView(APIView):
-    permission_classes = [permissions.AllowAny]
-    def get(self, request):
-        return Response({
-            "sobre": "O Sistema de Registro Criminal é uma plataforma oficial do Ministério da Justiça...",
-            "documentacao": "Acesse manuais de utilização, tutoriais em vídeo...",
-            "faq": "Perguntas frequentes sobre o sistema..."
-        })
-
-# Dados do usuário logado
-class UserMeView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        user = request.user
-        return Response({
-            "username": user.username,
-            "nome": user.get_full_name() or user.username,
-            "cargo": "Oficial de Registros"
-        })
-    
 
 
 class CriminalRecordListView(generics.ListAPIView):
-    serializer_class = CriminalRecordSerializer
+    serializer_class = RegistoCriminalSerializer
     
     def get_queryset(self):
         queryset = RegistoCriminal.objects.all()

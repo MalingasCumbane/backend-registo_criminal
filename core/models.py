@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 from users.models import Cidadao, FuncionarioJudicial 
 from utils.models import LifeCycle
 # Create your models here.
@@ -67,22 +66,21 @@ class CertificadoRegisto(LifeCycle):
     def __str__(self):
         return f"Certificado #{self.numero_referencia}"
 
-class RegistroCriminal(models.Model):
-    STATUS_CHOICES = [
-        ('Emitido', 'Emitido'),
-        ('Pendente', 'Pendente'),
+class RegistoCriminal(LifeCycle):
+    cidadao = models.ForeignKey(Cidadao, on_delete=models.CASCADE, related_name='registos_criminais')
+    numero_processo = models.CharField(max_length=100, unique=True)
+    data_ocorrencia = models.DateField()
+    TIPO_OCORRENCIA_CHOICES = [
+        ('CRIME', 'Crime'),
+        ('CONTRAVENCAO', 'Contravenção'),
+        ('INFRACCAO', 'Infração'),
     ]
-    RESULTADO_CHOICES = [
-        ('Limpo', 'Limpo'),
-        ('Com Registros', 'Com Registros'),
-    ]
-    cidadao = models.ForeignKey(Cidadao, on_delete=models.CASCADE, related_name='registros')
-    data = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    resultado = models.CharField(max_length=20, choices=RESULTADO_CHOICES)
-    criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    observacoes = models.TextField(blank=True, null=True)
+    tipo_ocorrencia = models.CharField(max_length=50, choices=TIPO_OCORRENCIA_CHOICES)
+    tribunal = models.CharField(max_length=100)
+    setenca = models.TextField()
+    data_setenca = models.DateField()
+    cumprido = models.BooleanField(default=False)
+    observacao = models.TextField(blank=True)
 
     def __str__(self):
         return f"Registo #{self.numero_processo} - {self.cidadao}"
-    

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SolicitarRegisto, Pagamento, CertificadoRegisto, RegistroCriminal
+from .models import RegistoCriminal, SolicitarRegisto, Pagamento, CertificadoRegisto
 
 # Register your models here.
 
@@ -9,9 +9,6 @@ class SolicitarRegistoAdmin(admin.ModelAdmin):
     search_fields = ('cidadao__utilizador__nome_completo', 'cidadao__numero_bi_nuit')
     date_hierarchy = 'data_solicitacao'
     raw_id_fields = ('cidadao',)
-
-
-
 
 # Configuração para o model Pagamento
 class PagamentoAdmin(admin.ModelAdmin):
@@ -29,21 +26,10 @@ class CertificadoRegistoAdmin(admin.ModelAdmin):
     date_hierarchy = 'data_emissao'
     raw_id_fields = ('solicitacao', 'funcionario_emissor')
 
-# Configuração para o model RegistroCriminal
-class RegistroCriminalAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cidadao', 'status', 'resultado', 'data', 'criado_por')
-    list_filter = ('status', 'resultado', 'data')
-    search_fields = ('cidadao__utilizador__nome_completo', 'cidadao__numero_bi_nuit')
-    date_hierarchy = 'data'
-    raw_id_fields = ('cidadao',)
-
 admin.site.register(SolicitarRegisto, SolicitarRegistoAdmin)
 admin.site.register(Pagamento, PagamentoAdmin)
 admin.site.register(CertificadoRegisto, CertificadoRegistoAdmin)
-admin.site.register(RegistroCriminal, RegistroCriminalAdmin)
-
-
-
+admin.site.register(RegistoCriminal)
 
 
 admin.site.site_header = "Sistema de Registro Criminal"
