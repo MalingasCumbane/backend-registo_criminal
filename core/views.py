@@ -259,15 +259,6 @@ class GerarCertificadoView(generics.CreateAPIView):
         serializer = self.get_serializer(certificado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-# CRUD para Cidadao
-class CidadaoViewSet(viewsets.ModelViewSet):
-    queryset = Cidadao.objects.all()
-    serializer_class = CidadaoSerializer
-    permission_classes = [IsAuthenticated]
-    filterset_fields = ['nome', 'numero_id']
-
-
-
 class CriminalRecordListView(generics.ListAPIView):
     serializer_class = RegistoCriminalSerializer
     
