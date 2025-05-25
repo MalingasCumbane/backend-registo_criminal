@@ -1,8 +1,8 @@
 from http.client import HTTPResponse
 import os
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, SolicitarRegistoSerializer
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status

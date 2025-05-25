@@ -109,17 +109,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return '{}, {}'.format(self.user_name, self.email)
 
-
-class Log(models.Model):
-    utilizador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='logs')
-    acao = models.CharField(max_length=255)
-    data_hora = models.DateTimeField(auto_now_add=True)
-    detalhes = models.TextField()
-    ip = models.CharField(max_length=45)
-
-    def __str__(self):
-        return f"{self.acao} - {self.data_hora}"
-
 class Cidadao(models.Model):
     full_name = models.CharField(("Nome completo"), max_length=255)
     numero_bi_nuit = models.CharField(max_length=50, unique=True)

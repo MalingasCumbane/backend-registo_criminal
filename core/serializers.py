@@ -1,4 +1,4 @@
-from core.models import CertificadoRegisto, Pagamento, RegistoCriminal, SolicitarRegisto
+from core.models import CertificadoRegisto, RegistoCriminal, SolicitarRegisto
 from rest_framework import serializers
 from users.models import Cidadao
 
@@ -6,12 +6,6 @@ from users.models import Cidadao
 class SolicitarRegistoSerializer(serializers.ModelSerializer):
     class Meta:
         model = SolicitarRegisto
-        fields = '__all__'
-
-
-class PagamentoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Pagamento
         fields = '__all__'
 
 

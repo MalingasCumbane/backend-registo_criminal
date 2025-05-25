@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .serializers import LoginSerializer, UserSerializer
 from .serializers import *
-from .models import Log, Cidadao, FuncionarioJudicial
+from .models import Cidadao
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from rest_framework import response,generics, status, permissions
 from knox.models import AuthToken
 from django.db.models import Q
+from django.contrib.auth import authenticate
 
 
 @method_decorator(csrf_exempt, name='dispatch')
