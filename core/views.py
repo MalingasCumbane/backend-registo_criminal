@@ -27,25 +27,6 @@ from django.http import Http404
 
 
 
-class SolicitarRegistoListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        solicitacoes = SolicitarRegisto.objects.all()
-        serializer = SolicitarRegistoSerializer(solicitacoes, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        print("request.data: ", request.data)
-        serializer = SolicitarRegistoSerializer(data=request.data)
-        if serializer.is_valid():
-            print("valido sim")
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        print("not valido")
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class SolicitarRegistoDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -71,131 +52,21 @@ class SolicitarRegistoDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# Pagamento Views
-class PagamentoListCreateView(APIView):
+class SolicitarRegistoListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        pagamentos = Pagamento.objects.all()
-        serializer = PagamentoSerializer(pagamentos, many=True)
+        solicitacoes = SolicitarRegisto.objects.all()
+        serializer = SolicitarRegistoSerializer(solicitacoes, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = PagamentoSerializer(data=request.data)
+        serializer = SolicitarRegistoSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class PagamentoDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(Pagamento, pk=pk)
-
-    def get(self, request, pk):
-        pagamento = self.get_object(pk)
-        serializer = PagamentoSerializer(pagamento)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        pagamento = self.get_object(pk)
-        serializer = PagamentoSerializer(pagamento, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        pagamento = self.get_object(pk)
-        pagamento.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-# CertificadoRegisto Views
-class CertificadoRegistoListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        certificados = CertificadoRegisto.objects.all()
-        serializer = CertificadoRegistoSerializer(certificados, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = CertificadoRegistoSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class CertificadoRegistoDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(CertificadoRegisto, pk=pk)
-
-    def get(self, request, pk):
-        certificado = self.get_object(pk)
-        serializer = CertificadoRegistoSerializer(certificado)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        certificado = self.get_object(pk)
-        serializer = CertificadoRegistoSerializer(certificado, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        certificado = self.get_object(pk)
-        certificado.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-# RegistoCriminal Views
-class RegistoCriminalListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        registos = RegistoCriminal.objects.all()
-        serializer = RegistoCriminalSerializer(registos, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = RegistoCriminalSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class RegistoCriminalDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(RegistoCriminal, pk=pk)
-
-    def get(self, request, pk):
-        registo = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registo)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        registo = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registo, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        registo = self.get_object(pk)
-        registo.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-# ===============================================================
-# ===============================================================
-# ===============================================================
-# ===============================================================
-# ===============================================================
-# ===============================================================
 
 class CidadaoDetailView(generics.RetrieveAPIView):
     queryset = Cidadao.objects.all()
@@ -214,21 +85,18 @@ class SolicitarRegistoCreateView(generics.CreateAPIView):
             funcionario=self.request.user.funcionario
         )
 
-# class GerarCertificadoView(generics.CreateAPIView):
     serializer_class = CertificadoRegistoSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
         
-        # Verificar se já existe certificado
         if hasattr(solicitacao, 'certificado'):
             return Response(
                 {'error': 'Já existe um certificado para esta solicitação'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Gerar conteúdo do certificado
         registos = solicitacao.cidadao.registos_criminais.all()
         tem_registos = registos.exists()
         
@@ -259,7 +127,6 @@ class SolicitarRegistoCreateView(generics.CreateAPIView):
             funcionario_emissor=request.user.funcionario
         )
 
-        # Atualizar estado da solicitação
         solicitacao.estado = 'APROVADO'
         solicitacao.save()
 
@@ -340,14 +207,6 @@ class GerarCertificadoView(generics.CreateAPIView):
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         return f"CR-{solicitacao.id}-{timestamp}"
 
-    # def registrar_historico(self, solicitacao, usuario):
-    #     """Registra a geração do certificado no histórico"""
-    #     HistoricoSolicitacao.objects.create(
-    #         solicitacao=solicitacao,
-    #         usuario=usuario,
-    #         acao='GERADO_CERTIFICADO',
-    #         detalhes=f'Certificado de registro criminal gerado - Ref: {solicitacao.certificado.numero_referencia}'
-    #     )
 
 class CriminalRecordListView(generics.ListAPIView):
     serializer_class = RegistoCriminalSerializer
