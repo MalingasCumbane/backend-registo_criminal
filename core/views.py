@@ -209,7 +209,7 @@ class SolicitarRegistoCreateView(generics.CreateAPIView):
             funcionario=self.request.user.funcionario
         )
 
-class GerarCertificadoView(generics.CreateAPIView):
+# class GerarCertificadoView(generics.CreateAPIView):
     serializer_class = CertificadoRegistoSerializer
     permission_classes = [IsAuthenticated]
 
@@ -260,6 +260,89 @@ class GerarCertificadoView(generics.CreateAPIView):
 
         serializer = self.get_serializer(certificado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class GerarCertificadoView(generics.CreateAPIView):
+    serializer_class = CertificadoRegistoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
+        
+        # Verificar se já existe certificado
+        if hasattr(solicitacao, 'certificado'):
+            # Se existir, retornar os detalhes do certificado existente
+            certificado_existente = solicitacao.certificado
+            serializer = self.get_serializer(certificado_existente)
+            
+            # Adicionar mensagem informativa na resposta
+            response_data = serializer.data
+            response_data['message'] = 'Certificado já existente - retornando dados do certificado anterior'
+            
+            return Response(
+                response_data,
+                status=status.HTTP_200_OK
+            )
+        
+        # Se não existir, criar novo certificado
+        registos = solicitacao.cidadao.registos_criminais.all()
+        tem_registos = registos.exists()
+        
+        conteudo = {
+            "cidadao": {
+                "nome": solicitacao.cidadao.full_name,
+                "bi": solicitacao.cidadao.numero_bi_nuit,
+                "nascimento": solicitacao.cidadao.data_nascimento,
+                "endereco": solicitacao.cidadao.endereco,
+                "nacionalidade": solicitacao.cidadao.nacionalidade
+            },
+            "tem_registos": tem_registos,
+            "registos": [
+                {
+                    "processo": r.numero_processo,
+                    "data": r.data_ocorrencia.strftime('%Y-%m-%d') if r.data_ocorrencia else None,
+                    "tribunal": r.tribunal,
+                    "tipo": r.get_tipo_ocorrencia_display(),
+                    "sentenca": r.setenca
+                } for r in registos
+            ],
+            "validade": (datetime.date.today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d'),
+            "data_emissao": datetime.date.today().strftime('%Y-%m-%d')
+        }
+
+        # Gerar número de referência único
+        numero_referencia = self.gerar_numero_referencia(solicitacao)
+
+        certificado = CertificadoRegisto.objects.create(
+            solicitacao=solicitacao,
+            data_validade=datetime.date.today() + datetime.timedelta(days=90),
+            numero_referencia=numero_referencia,
+            conteudo=conteudo,
+            funcionario_emissor=request.user.funcionario
+        )
+
+        # Atualizar estado da solicitação
+        solicitacao.estado = 'APROVADO'
+        solicitacao.save()
+
+        # Registrar ação no histórico
+        # self.registrar_historico(solicitacao, request.user)
+
+        serializer = self.get_serializer(certificado)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def gerar_numero_referencia(self, solicitacao):
+        """Gera um número de referência único para o certificado"""
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        return f"CR-{solicitacao.id}-{timestamp}"
+
+    # def registrar_historico(self, solicitacao, usuario):
+    #     """Registra a geração do certificado no histórico"""
+    #     HistoricoSolicitacao.objects.create(
+    #         solicitacao=solicitacao,
+    #         usuario=usuario,
+    #         acao='GERADO_CERTIFICADO',
+    #         detalhes=f'Certificado de registro criminal gerado - Ref: {solicitacao.certificado.numero_referencia}'
+    #     )
 
 class CriminalRecordListView(generics.ListAPIView):
     serializer_class = RegistoCriminalSerializer
@@ -335,3 +418,10 @@ class CertificadoViewSet(viewsets.ModelViewSet):
                 response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
                 return response
         return Response({"detail": "Arquivo não encontrado"}, status=404)
+    
+
+class CertificadoDetailView(generics.RetrieveAPIView):
+    queryset = CertificadoRegisto.objects.all()
+    serializer_class = CertificadoRegistoSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
-from core.views import CriminalRecordListView, GerarCertificadoView, RecordStatsView, SolicitarRegistoCreateView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView, get_cidadao_registos
+from core.views import CertificadoDetailView, CriminalRecordListView, GerarCertificadoView, RecordStatsView, SolicitarRegistoCreateView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView, get_cidadao_registos
 
 
 app_name = "api"
@@ -42,7 +42,6 @@ urlpatterns = [
     
     # Autenticação da API
     # path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-
     # path('solicitacoes/<str:bi>/', SolicitarRegistoCreateView.as_view(), name='solicitar-registo'),
 
     # ============================================================================
@@ -55,5 +54,6 @@ urlpatterns = [
 
     path('solicitacoes/', SolicitarRegistoListCreateView.as_view(), name='solicitacao-list'), #Criar solicitação re registo criminal
     path('certificados/<int:pk>/gerar/', GerarCertificadoView.as_view(), name='gerar-certificado'), #Gerar documento PDF
+    path('certificados/actualizar/<int:id>/', CertificadoDetailView.as_view(), name='certificado-detail'),
 
 ]
