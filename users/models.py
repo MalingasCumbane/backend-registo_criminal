@@ -109,7 +109,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return '{}, {}'.format(self.user_name, self.email)
 
-    
 
 class Log(models.Model):
     utilizador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='logs')
@@ -135,7 +134,6 @@ class Cidadao(models.Model):
     
     def tem_registos_criminais(self):
         return self.registos_criminais.exists()
-
 
 
 class FuncionarioJudicial(models.Model):

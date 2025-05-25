@@ -1,11 +1,5 @@
 from rest_framework import serializers
 from .models import Log, Cidadao, FuncionarioJudicial, User
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
-
-
-# User = get_user_model()
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,10 +14,6 @@ class LogSerializer(serializers.ModelSerializer):
 
 
 class CidadaoSerializer(serializers.ModelSerializer):
-    # full_name = serializers.CharField(source='full_name', read_only=True)
-    # email = serializers.CharField(source='.email', read_only=True)
-    
-    # utilizador = UserSerializer()
     
     class Meta:
         model = Cidadao

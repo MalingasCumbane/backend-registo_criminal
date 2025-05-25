@@ -74,64 +74,6 @@ class CidadaoDetailView(generics.RetrieveAPIView):
     lookup_field = 'numero_bi_nuit'
     permission_classes = [IsAuthenticated]
 
-class SolicitarRegistoCreateView(generics.CreateAPIView):
-    queryset = SolicitarRegisto.objects.all()
-    serializer_class = SolicitarRegistoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(
-            cidadao=get_object_or_404(Cidadao, numero_bi_nuit=self.kwargs['bi']),
-            funcionario=self.request.user.funcionario
-        )
-
-    serializer_class = CertificadoRegistoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
-        
-        if hasattr(solicitacao, 'certificado'):
-            return Response(
-                {'error': 'Já existe um certificado para esta solicitação'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        registos = solicitacao.cidadao.registos_criminais.all()
-        tem_registos = registos.exists()
-        
-        conteudo = {
-            "cidadao": {
-                "nome": solicitacao.cidadao.full_name,
-                "bi": solicitacao.cidadao.numero_bi_nuit,
-                "nascimento": solicitacao.cidadao.data_nascimento,
-                "endereco": solicitacao.cidadao.endereco
-            },
-            "tem_registos": tem_registos,
-            "registos": [
-                {
-                    "processo": r.numero_processo,
-                    "data": r.data_ocorrencia,
-                    "tipo": r.get_tipo_ocorrencia_display(),
-                    "sentenca": r.setenca
-                } for r in registos
-            ],
-            "validade": (datetime.date.today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d')
-        }
-
-        certificado = CertificadoRegisto.objects.create(
-            solicitacao=solicitacao,
-            data_validade=datetime.date.today() + datetime.timedelta(days=90),
-            numero_referencia=f"CR-{solicitacao.id}-{datetime.datetime.now().strftime('%Y%m%d')}",
-            conteudo=conteudo,
-            funcionario_emissor=request.user.funcionario
-        )
-
-        solicitacao.estado = 'APROVADO'
-        solicitacao.save()
-
-        serializer = self.get_serializer(certificado)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class GerarCertificadoView(generics.CreateAPIView):
     serializer_class = CertificadoRegistoSerializer
@@ -265,24 +207,6 @@ def get_cidadao_registos(request, id):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-class CertificadoViewSet(viewsets.ModelViewSet):
-    queryset = CertificadoRegisto.objects.all()
-    serializer_class = CertificadoRegistoSerializer
-
-    @action(detail=True, methods=['get'])
-    def pdf(self, request, pk=None):
-        certificado = self.get_object()
-        file_path = certificado.arquivo_pdf.path  # Ajuste para seu campo de arquivo
-        
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as pdf:
-                response = HTTPResponse(pdf.read(), content_type='application/pdf')
-                response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-                return response
-        return Response({"detail": "Arquivo não encontrado"}, status=404)
-    
 
 class CertificadoDetailView(generics.RetrieveAPIView):
     queryset = CertificadoRegisto.objects.all()
