@@ -16,13 +16,12 @@ urlpatterns = [
     path('records/', CriminalRecordListView.as_view(), name='records-list'), #listar todos os registos criminais
     path('records/stats/', RecordStatsView.as_view(), name='records-stats'), #listar estatísticas de registos criminais
 
-    path('solicitacoes/', SolicitarRegistoListCreateView.as_view(), name='solicitacao-list'), #Criar solicitação re registo criminal
+    path('<int:id>/solicitacoes/', SolicitarRegistoListCreateView.as_view(), name='solicitacao-list'), #Criar solicitação re registo criminal
     path('solicitacoes/<int:pk>/', SolicitarRegistoDetailView.as_view(), name='solicitacao-detail'), #Pegar solicitação por ID
 
     path('certificados/<int:pk>/gerar/', GerarCertificadoView.as_view(), name='gerar-certificado'), #Gerar documento PDF
     path('certificados/actualizar/<int:id>/', CertificadoDetailView.as_view(), name='certificado-detail'),
 
     path('dashboard-stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
-
 
 ]

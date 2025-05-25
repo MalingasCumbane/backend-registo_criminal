@@ -25,10 +25,9 @@ from django.http import FileResponse
 from django.http import Http404
 
 
-
 class SolicitarRegistoDetailView(APIView):
     permission_classes = [IsAuthenticated]
-
+    print("this one then")
     def get_object(self, pk):
         return get_object_or_404(SolicitarRegisto, pk=pk)
 
@@ -54,12 +53,12 @@ class SolicitarRegistoDetailView(APIView):
 class SolicitarRegistoListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        solicitacoes = SolicitarRegisto.objects.all()
+    def get(self, request, id):
+        solicitacoes = SolicitarRegisto.objects.filter(cidadao__id=id)
         serializer = SolicitarRegistoSerializer(solicitacoes, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+    def post(self, request, id):
         serializer = SolicitarRegistoSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

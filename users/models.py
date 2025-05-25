@@ -118,6 +118,17 @@ class Cidadao(models.Model):
     distrito = models.CharField(max_length=100)
     data_nascimento = models.DateField()
 
+    nome_pai = models.CharField(max_length=255, blank=True, null=True)
+    nome_mae = models.CharField(max_length=255, blank=True, null=True)
+    naturalidade = models.CharField(max_length=255, blank=True, null=True)
+    provincia = models.CharField(max_length=100, blank=True, null=True)
+    local_emissao_bi = models.CharField(max_length=255, blank=True, null=True)
+    data_emissao_bi = models.CharField(max_length=100, blank=True, null=True)
+    residencia = models.CharField(max_length=100, blank=True, null=True)
+    sexo = models.CharField(max_length=100, blank=True, null=True)
+    estado_civil = models.CharField(max_length=50, blank=True, null=True)
+    data_validade_bi = models.CharField(max_length=50, blank=True, null=True)
+
     def __str__(self):
         return self.full_name
     
