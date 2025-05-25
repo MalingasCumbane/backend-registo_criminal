@@ -1,14 +1,14 @@
 from http.client import HTTPResponse
 import os
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, SolicitarRegistoSerializer, CidadaoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, SolicitarRegistoSerializer
 from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status, viewsets, permissions
+from rest_framework import generics, status, viewsets
 import datetime
 from users.models import Cidadao
 from .models import RegistoCriminal, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
@@ -20,7 +20,12 @@ from django.utils import timezone
 from django.db.models import Q
 from rest_framework.decorators import api_view, action
 viewsets.ModelViewSet
-# Create your views here.
+from django.views import View
+from django.http import FileResponse
+from django.http import Http404
+
+
+
 
 class SolicitarRegistoListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -425,3 +430,4 @@ class CertificadoDetailView(generics.RetrieveAPIView):
     serializer_class = CertificadoRegistoSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
+
