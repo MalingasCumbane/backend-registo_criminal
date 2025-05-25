@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import RegistoCriminal, SolicitarRegisto, Pagamento, CertificadoRegisto
+from .models import RegistoCriminal, Searches, SolicitarRegisto, Pagamento, CertificadoRegisto
 
 # Register your models here.
 
@@ -30,6 +30,7 @@ admin.site.register(SolicitarRegisto, SolicitarRegistoAdmin)
 admin.site.register(Pagamento, PagamentoAdmin)
 admin.site.register(CertificadoRegisto, CertificadoRegistoAdmin)
 admin.site.register(RegistoCriminal)
+admin.site.register(Searches)
 
 
 admin.site.site_header = "Sistema de Registo Criminal"

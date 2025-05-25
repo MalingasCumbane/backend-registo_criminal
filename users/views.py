@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from core.models import Searches
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -76,7 +77,7 @@ class CidadaoSearchAPIView(generics.ListAPIView):
         queryset = Cidadao.objects.all()
         
         if search_query:
-
+            Searches.objects.create(identifier=search_query)
             if search_type == 'bi':
                 print("")
                 queryset = queryset.filter( Q(numero_bi_nuit__icontains=search_query) )
@@ -130,3 +131,5 @@ class CidadaoDetailView(APIView):
         cidadao = self.get_object(bi)
         cidadao.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+

@@ -84,3 +84,10 @@ class RegistoCriminal(LifeCycle):
 
     def __str__(self):
         return f"Registo #{self.numero_processo} - {self.cidadao}"
+
+
+class Searches(LifeCycle):
+    identifier =  models.CharField(max_length=100, unique=False)
+    
+    def __str__(self):
+        return f"Registo #{self.id} - {self.identifier}"

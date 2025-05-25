@@ -122,7 +122,6 @@ class Log(models.Model):
         return f"{self.acao} - {self.data_hora}"
 
 class Cidadao(models.Model):
-    # utilizador = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='cidadao')
     full_name = models.CharField(("Nome completo"), max_length=255)
     numero_bi_nuit = models.CharField(max_length=50, unique=True)
     endereco = models.TextField()

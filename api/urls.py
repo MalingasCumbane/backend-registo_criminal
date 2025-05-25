@@ -1,7 +1,7 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import CidadaoDetailView
-from core.views import CertificadoDetailView, CriminalRecordListView, GerarCertificadoView, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, get_cidadao_registos
+from core.views import CertificadoDetailView, CriminalRecordListView, DashboardStatsAPIView, GerarCertificadoView, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, get_cidadao_registos
 
 
 app_name = "api"
@@ -21,5 +21,8 @@ urlpatterns = [
 
     path('certificados/<int:pk>/gerar/', GerarCertificadoView.as_view(), name='gerar-certificado'), #Gerar documento PDF
     path('certificados/actualizar/<int:id>/', CertificadoDetailView.as_view(), name='certificado-detail'),
+
+    path('dashboard-stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
+
 
 ]

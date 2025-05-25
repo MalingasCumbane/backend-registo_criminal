@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 import datetime
 from users.models import Cidadao
-from .models import RegistoCriminal, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
+from .models import RegistoCriminal, Searches, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
 from django.contrib.auth.models import User
 from django.db.models import Count
 from .models import SolicitarRegisto, Pagamento, CertificadoRegisto
@@ -290,3 +290,30 @@ class CertificadoDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
+
+class DashboardStatsAPIView(APIView):
+    def get(self, request):
+        try:
+            total_searches = Searches.objects.count()
+            
+            total_cidadaos_processados = Cidadao.objects.annotate(
+                num_registos=Count('registos_criminais')
+            ).filter(num_registos__gt=0).count()
+            
+            total_registos_emitidos = RegistoCriminal.objects.count()
+            
+            total_registos_limpos = Cidadao.objects.annotate(
+                num_registos=Count('registos_criminais')
+            ).filter(num_registos=0).count()
+            
+            data = {
+                'registos_emitidos': total_registos_emitidos,
+                'pesquisas_realizadas': total_searches,
+                'cidadaos_processados': total_cidadaos_processados,
+                'registos_limpos': total_registos_limpos
+            }
+            
+            return Response(data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
