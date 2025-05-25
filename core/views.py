@@ -26,7 +26,6 @@ from django.http import Http404
 
 
 
-
 class SolicitarRegistoDetailView(APIView):
     permission_classes = [IsAuthenticated]
 

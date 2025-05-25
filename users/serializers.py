@@ -4,7 +4,7 @@ from .models import Cidadao, User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', ]
+        fields = ['full_name','email', ]
 
 class CidadaoSerializer(serializers.ModelSerializer):
     

@@ -119,7 +119,7 @@ class Cidadao(models.Model):
     data_nascimento = models.DateField()
 
     def __str__(self):
-        return self.numero_bi_nuit
+        return self.full_name
     
     def tem_registos_criminais(self):
         return self.registos_criminais.exists()
