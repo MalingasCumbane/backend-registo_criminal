@@ -32,6 +32,6 @@ admin.site.register(CertificadoRegisto, CertificadoRegistoAdmin)
 admin.site.register(RegistoCriminal)
 
 
-admin.site.site_header = "Sistema de Registro Criminal"
+admin.site.site_header = "Sistema de Registo Criminal"
 admin.site.site_title = "Administração do Sistema"
-admin.site.index_title = "Bem-vindo ao Sistema de Registro Criminal"
+admin.site.index_title = "Bem-vindo ao Sistema de Registo Criminal"

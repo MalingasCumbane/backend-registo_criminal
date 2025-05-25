@@ -1,3 +1,5 @@
+from http.client import HTTPResponse
+import os
 from django.shortcuts import render
 from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, SolicitarRegistoSerializer, CidadaoSerializer
 from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, PagamentoSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
@@ -16,8 +18,8 @@ from .models import SolicitarRegisto, Pagamento, CertificadoRegisto
 from django.db.models import Count
 from django.utils import timezone
 from django.db.models import Q
-from rest_framework.decorators import api_view
-
+from rest_framework.decorators import api_view, action
+viewsets.ModelViewSet
 # Create your views here.
 
 class SolicitarRegistoListCreateView(APIView):
@@ -149,8 +151,8 @@ class RegistoCriminalListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        registros = RegistoCriminal.objects.all()
-        serializer = RegistoCriminalSerializer(registros, many=True)
+        registos = RegistoCriminal.objects.all()
+        serializer = RegistoCriminalSerializer(registos, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -167,21 +169,21 @@ class RegistoCriminalDetailView(APIView):
         return get_object_or_404(RegistoCriminal, pk=pk)
 
     def get(self, request, pk):
-        registro = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registro)
+        registo = self.get_object(pk)
+        serializer = RegistoCriminalSerializer(registo)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        registro = self.get_object(pk)
-        serializer = RegistoCriminalSerializer(registro, data=request.data)
+        registo = self.get_object(pk)
+        serializer = RegistoCriminalSerializer(registo, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        registro = self.get_object(pk)
-        registro.delete()
+        registo = self.get_object(pk)
+        registo.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 # ===============================================================
 # ===============================================================
@@ -222,8 +224,8 @@ class GerarCertificadoView(generics.CreateAPIView):
             )
         
         # Gerar conteúdo do certificado
-        registos = solicitacao.cidadao.registros_criminais.all()
-        tem_registros = registos.exists()
+        registos = solicitacao.cidadao.registos_criminais.all()
+        tem_registos = registos.exists()
         
         conteudo = {
             "cidadao": {
@@ -232,8 +234,8 @@ class GerarCertificadoView(generics.CreateAPIView):
                 "nascimento": solicitacao.cidadao.data_nascimento,
                 "endereco": solicitacao.cidadao.endereco
             },
-            "tem_registros": tem_registros,
-            "registros": [
+            "tem_registos": tem_registos,
+            "registos": [
                 {
                     "processo": r.numero_processo,
                     "data": r.data_ocorrencia,
@@ -292,16 +294,16 @@ class RecordStatsView(generics.GenericAPIView):
 
 
 @api_view(['GET'])
-def get_cidadao_registros(request, id):
+def get_cidadao_registos(request, id):
     try:
         # Get the citizen
         cidadao = Cidadao.objects.get(numero_bi_nuit=id)
         
         # Get all criminal records for this citizen
-        registros = RegistoCriminal.objects.filter(cidadao=cidadao)
+        registos = RegistoCriminal.objects.filter(cidadao=cidadao)
         
         # Serialize the data
-        serializer = RegistoCriminalSerializer(registros, many=True)
+        serializer = RegistoCriminalSerializer(registos, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -316,3 +318,20 @@ def get_cidadao_registros(request, id):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+class CertificadoViewSet(viewsets.ModelViewSet):
+    queryset = CertificadoRegisto.objects.all()
+    serializer_class = CertificadoRegistoSerializer
+
+    @action(detail=True, methods=['get'])
+    def pdf(self, request, pk=None):
+        certificado = self.get_object()
+        file_path = certificado.arquivo_pdf.path  # Ajuste para seu campo de arquivo
+        
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as pdf:
+                response = HTTPResponse(pdf.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                return response
+        return Response({"detail": "Arquivo não encontrado"}, status=404)

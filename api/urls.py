@@ -1,7 +1,7 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import UserListCreateView, UserDetailView, LogListCreateView, LogDetailView, CidadaoDetailView, FuncionarioJudicialListCreateView, FuncionarioJudicialDetailView
-from core.views import CriminalRecordListView, GerarCertificadoView, RecordStatsView, SolicitarRegistoCreateView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView, get_cidadao_registros
+from core.views import CriminalRecordListView, GerarCertificadoView, RecordStatsView, SolicitarRegistoCreateView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, PagamentoListCreateView, PagamentoDetailView, CertificadoRegistoListCreateView, CertificadoRegistoDetailView, RegistoCriminalListCreateView, RegistoCriminalDetailView, get_cidadao_registos
 
 
 app_name = "api"
@@ -25,8 +25,8 @@ urlpatterns = [
     # path('funcionarios/', FuncionarioJudicialListCreateView.as_view(), name='funcionario-list'),
     # path('funcionarios/<int:pk>/', FuncionarioJudicialDetailView.as_view(), name='funcionario-detail'),
     
-    # Solicitações de Registro
-    # path('solicitacoes/<int:pk>/', SolicitarRegistoDetailView.as_view(), name='solicitacao-detail'),
+    # Solicitações de Registo
+    path('solicitacoes/<int:pk>/', SolicitarRegistoDetailView.as_view(), name='solicitacao-detail'),
     
     # # Pagamentos
     # path('pagamentos/', PagamentoListCreateView.as_view(), name='pagamento-list'),
@@ -34,11 +34,11 @@ urlpatterns = [
     
     # Certificados
     path('certificados/', CertificadoRegistoListCreateView.as_view(), name='certificado-list'),
-    path('certificados/<int:pk>/', CertificadoRegistoDetailView.as_view(), name='certificado-detail'),
+    path('certificados/<int:pk>/pdf/', CertificadoRegistoDetailView.as_view(), name='certificado-detail'),
     
-    # Registros Criminais
-    path('registros-criminais/', RegistoCriminalListCreateView.as_view(), name='registo-criminal-list'),
-    path('registros-criminais/<int:pk>/', RegistoCriminalDetailView.as_view(), name='registo-criminal-detail'),
+    # Registos Criminais
+    path('registos-criminais/', RegistoCriminalListCreateView.as_view(), name='registo-criminal-list'),
+    path('registos-criminais/<int:pk>/', RegistoCriminalDetailView.as_view(), name='registo-criminal-detail'),
     
     # Autenticação da API
     # path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
@@ -47,7 +47,7 @@ urlpatterns = [
 
     # ============================================================================
     path('pesquisar/cidadaos/<str:bi>/', CidadaoDetailView.as_view(), name='cidadao-detail'), # get ID details
-    path('cidadaos/<str:id>/registros/', get_cidadao_registros, name='cidadao-registros'), # Buscar registos criminais do Cidadao atraves do ID dele
+    path('cidadaos/<str:id>/registos/', get_cidadao_registos, name='cidadao-registos'), # Buscar registos criminais do Cidadao atraves do ID dele
 
     path('cidadaos/search/', CidadaoSearchAPIView.as_view(), name='cidadao-search'), #Pesquisar por um Cidadao
     path('records/', CriminalRecordListView.as_view(), name='records-list'), #listar todos os registos criminais

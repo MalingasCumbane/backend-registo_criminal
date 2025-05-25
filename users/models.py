@@ -134,7 +134,7 @@ class Cidadao(models.Model):
     def __str__(self):
         return self.numero_bi_nuit
     
-    def tem_registros_criminais(self):
+    def tem_registos_criminais(self):
         return self.registos_criminais.exists()
 
 
