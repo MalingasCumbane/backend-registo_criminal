@@ -15,7 +15,7 @@ urlpatterns = [
 
     path('records/', CriminalRecordListView.as_view(), name='records-list'), #listar todos os registos criminais
     path('records/stats/', RecordStatsView.as_view(), name='records-stats'), #listar estatísticas de registos criminais
-    path('records/<int:numero_referencia>/', RecordDetailsByReference.as_view(), name='records-stats'), #listar estatísticas de registos criminais
+    path('records/certificate/<int:num_ref>/', RecordDetailsByReference.as_view(), name='numero_referencia'), #listar estatísticas de registos criminais
 
     path('<int:id>/solicitacoes/', SolicitarRegistoListCreateView.as_view(), name='solicitacao-list'), #Criar solicitação re registo criminal
     path('solicitacoes/<int:pk>/', SolicitarRegistoDetailView.as_view(), name='solicitacao-detail'), #Pegar solicitação por ID

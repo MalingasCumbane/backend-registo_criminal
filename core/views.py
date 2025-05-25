@@ -236,10 +236,18 @@ class DashboardStatsAPIView(APIView):
 
 
 class RecordDetailsByReference(APIView):
-    def get_object_reg(self, numero_referencia):
-        return get_object_or_404(CertificadoRegisto, numero_referencia=numero_referencia)
+    def get_object_reg(self, num_ref):
+        try:
+            return CertificadoRegisto.objects.get(numero_referencia=num_ref)
+        except CertificadoRegisto.DoesNotExist:
+            print(f"Certificado com referência {num_ref} não encontrado")
+            raise Http404
+        except Exception as e:
+            print(f"Erro ao buscar certificado: {str(e)}")
+            raise Http404
 
-    def get(self, request, numero_referencia):
-            certif = self.get_object_reg(numero_referencia)
-            serializer = CertificadoRegistoSerializer(certif)
-            return Response(serializer.data)
+    def get(self, request, num_ref):
+        certif = self.get_object_reg(num_ref)
+        serializer = CertificadoRegistoSerializer(certif)
+        return Response(serializer.data)
+    
