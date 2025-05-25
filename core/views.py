@@ -154,7 +154,6 @@ class CriminalRecordListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = RegistoCriminal.objects.all()
         
-        # Search functionality
         search_term = self.request.query_params.get('search', None)
         if search_term:
             queryset = queryset.filter(
@@ -183,13 +182,8 @@ class RecordStatsView(generics.GenericAPIView):
 @api_view(['GET'])
 def get_cidadao_registos(request, id):
     try:
-        # Get the citizen
         cidadao = Cidadao.objects.get(numero_bi_nuit=id)
-        
-        # Get all criminal records for this citizen
         registos = RegistoCriminal.objects.filter(cidadao=cidadao)
-        
-        # Serialize the data
         serializer = RegistoCriminalSerializer(registos, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -239,3 +233,13 @@ class DashboardStatsAPIView(APIView):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RecordDetailsByReference(APIView):
+    def get_object_reg(self, numero_referencia):
+        return get_object_or_404(CertificadoRegisto, numero_referencia=numero_referencia)
+
+    def get(self, request, numero_referencia):
+            certif = self.get_object_reg(numero_referencia)
+            serializer = CertificadoRegistoSerializer(certif)
+            return Response(serializer.data)

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import CidadaoDetailView
-from core.views import CertificadoDetailView, CriminalRecordListView, DashboardStatsAPIView, GerarCertificadoView, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, get_cidadao_registos
+from core.views import CertificadoDetailView, CriminalRecordListView, DashboardStatsAPIView, GerarCertificadoView, RecordDetailsByReference, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, get_cidadao_registos
 
 
 app_name = "api"
@@ -15,6 +15,7 @@ urlpatterns = [
 
     path('records/', CriminalRecordListView.as_view(), name='records-list'), #listar todos os registos criminais
     path('records/stats/', RecordStatsView.as_view(), name='records-stats'), #listar estatísticas de registos criminais
+    path('records/<int:numero_referencia>/', RecordDetailsByReference.as_view(), name='records-stats'), #listar estatísticas de registos criminais
 
     path('<int:id>/solicitacoes/', SolicitarRegistoListCreateView.as_view(), name='solicitacao-list'), #Criar solicitação re registo criminal
     path('solicitacoes/<int:pk>/', SolicitarRegistoDetailView.as_view(), name='solicitacao-detail'), #Pegar solicitação por ID
@@ -23,5 +24,4 @@ urlpatterns = [
     path('certificados/actualizar/<int:id>/', CertificadoDetailView.as_view(), name='certificado-detail'),
 
     path('dashboard-stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
-
 ]
