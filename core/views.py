@@ -237,9 +237,8 @@ class DashboardStatsAPIView(APIView):
 class RecordDetailsByReference(APIView):
     def post(self, request):
         try:
-            # Certifique-se de usar .get() para retornar um único objeto
             certif = CertificadoRegisto.objects.get(numero_referencia=request.data['num_ref'])
-            serializer = CertificadoRegistoSerializer(certif)  # Agora serializando um objeto único
+            serializer = CertificadoRegistoSerializer(certif)
             return Response(serializer.data)
         except CertificadoRegisto.DoesNotExist:
             return Response({"detail": "Certificado não encontrado"}, status=status.HTTP_404_NOT_FOUND)
@@ -275,4 +274,3 @@ class CreateNewCriminalRecords(APIView):
         )
 
         return Response(status=status.HTTP_200_OK)
-    
