@@ -3,7 +3,14 @@ from rest_framework import serializers
 from users.models import Cidadao
 
 
+class CidadaoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cidadao
+        fields = '__all__'
+
+
 class SolicitarRegistoSerializer(serializers.ModelSerializer):
+    cidadao = CidadaoSerializer()
     class Meta:
         model = SolicitarRegisto
         fields = '__all__'
@@ -15,11 +22,6 @@ class CertificadoRegistoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CidadaoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Cidadao
-        fields = '__all__'
-
 class RegistoCriminalSerializer(serializers.ModelSerializer):
     cidadao = CidadaoSerializer(read_only=True) 
     
@@ -28,7 +30,7 @@ class RegistoCriminalSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class RegistoCriminalSerializer(serializers.ModelSerializer):
-    cidadao = CidadaoSerializer(read_only=True)  # Adiciona os dados do cidadão
+    cidadao = CidadaoSerializer(read_only=True)
     
     class Meta:
         model = RegistoCriminal

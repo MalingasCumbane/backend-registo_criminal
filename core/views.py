@@ -1,3 +1,6 @@
+from django.http import Http404
+from django.http import FileResponse
+from django.views import View
 from http.client import HTTPResponse
 import os
 from django.shortcuts import render
@@ -20,14 +23,12 @@ from django.utils import timezone
 from django.db.models import Q
 from rest_framework.decorators import api_view, action
 viewsets.ModelViewSet
-from django.views import View
-from django.http import FileResponse
-from django.http import Http404
 
 
 class SolicitarRegistoDetailView(APIView):
     permission_classes = [IsAuthenticated]
     print("this one then")
+
     def get_object(self, pk):
         return get_object_or_404(SolicitarRegisto, pk=pk)
 
@@ -63,8 +64,9 @@ class SolicitarRegistoListCreateView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CidadaoDetailView(generics.RetrieveAPIView):
     queryset = Cidadao.objects.all()
@@ -79,26 +81,26 @@ class GerarCertificadoView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
-        
+
         # Verificar se já existe certificado
         if hasattr(solicitacao, 'certificado'):
             # Se existir, retornar os detalhes do certificado existente
             certificado_existente = solicitacao.certificado
             serializer = self.get_serializer(certificado_existente)
-            
+
             # Adicionar mensagem informativa na resposta
             response_data = serializer.data
             response_data['message'] = 'Certificado já existente - retornando dados do certificado anterior'
-            
+
             return Response(
                 response_data,
                 status=status.HTTP_200_OK
             )
-        
+
         # Se não existir, criar novo certificado
         registos = solicitacao.cidadao.registos_criminais.all()
         tem_registos = registos.exists()
-        
+
         conteudo = {
             "cidadao": {
                 "nome": solicitacao.cidadao.full_name,
@@ -123,7 +125,7 @@ class GerarCertificadoView(generics.CreateAPIView):
 
         # Gerar número de referência único
         numero_referencia = self.gerar_numero_referencia(solicitacao)
-
+        
         certificado = CertificadoRegisto.objects.create(
             solicitacao=solicitacao,
             data_validade=datetime.date.today() + datetime.timedelta(days=90),
@@ -136,9 +138,6 @@ class GerarCertificadoView(generics.CreateAPIView):
         solicitacao.estado = 'APROVADO'
         solicitacao.save()
 
-        # Registrar ação no histórico
-        # self.registrar_historico(solicitacao, request.user)
-
         serializer = self.get_serializer(certificado)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -150,10 +149,10 @@ class GerarCertificadoView(generics.CreateAPIView):
 
 class CriminalRecordListView(generics.ListAPIView):
     serializer_class = RegistoCriminalSerializer
-    
+
     def get_queryset(self):
         queryset = RegistoCriminal.objects.all()
-        
+
         search_term = self.request.query_params.get('search', None)
         if search_term:
             queryset = queryset.filter(
@@ -161,22 +160,23 @@ class CriminalRecordListView(generics.ListAPIView):
                 Q(citizen__icontains=search_term) |
                 Q(citizen_id__icontains=search_term)
             )
-            
+
         return queryset.order_by('-id')
+
 
 class RecordStatsView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         today = timezone.now().date()
-        
+
         stats = {
             'total_records': RegistoCriminal.objects.count(),
             'unique_citizens': RegistoCriminal.objects.values('cidadao_id').distinct().count(),
-            # 'with_records': RegistoCriminal.objects.filter(has_criminal_record=True).count(),
-            'today_records': RegistoCriminal.objects.filter(created_at=today).count(),
+            'with_records': RegistoCriminal.objects.filter(
+                tipo_ocorrencia__in=['CRIME', 'CONTRAVENCAO', 'INFRACCAO']
+            ).count(),            'today_records': RegistoCriminal.objects.filter(created_at=today).count(),
         }
-        
-        return Response(stats)
 
+        return Response(stats)
 
 
 @api_view(['GET'])
@@ -185,20 +185,21 @@ def get_cidadao_registos(request, id):
         cidadao = Cidadao.objects.get(numero_bi_nuit=id)
         registos = RegistoCriminal.objects.filter(cidadao=cidadao)
         serializer = RegistoCriminalSerializer(registos, many=True)
-        
+
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     except Cidadao.DoesNotExist:
         return Response(
             {"error": "Cidadão não encontrado"},
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
     except Exception as e:
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 
 class CertificadoDetailView(generics.RetrieveAPIView):
     queryset = CertificadoRegisto.objects.all()
@@ -211,43 +212,70 @@ class DashboardStatsAPIView(APIView):
     def get(self, request):
         try:
             total_searches = Searches.objects.count()
-            
+
             total_cidadaos_processados = Cidadao.objects.annotate(
                 num_registos=Count('registos_criminais')
             ).filter(num_registos__gt=0).count()
-            
+
             total_registos_emitidos = RegistoCriminal.objects.count()
-            
+
             total_registos_limpos = Cidadao.objects.annotate(
                 num_registos=Count('registos_criminais')
             ).filter(num_registos=0).count()
-            
+
             data = {
                 'registos_emitidos': total_registos_emitidos,
                 'pesquisas_realizadas': total_searches,
                 'cidadaos_processados': total_cidadaos_processados,
                 'registos_limpos': total_registos_limpos
             }
-            
+
             return Response(data, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class RecordDetailsByReference(APIView):
-    def get_object_reg(self, num_ref):
+    def post(self, request):
         try:
-            return CertificadoRegisto.objects.get(numero_referencia=num_ref)
+            # Certifique-se de usar .get() para retornar um único objeto
+            certif = CertificadoRegisto.objects.get(numero_referencia=request.data['num_ref'])
+            serializer = CertificadoRegistoSerializer(certif)  # Agora serializando um objeto único
+            return Response(serializer.data)
         except CertificadoRegisto.DoesNotExist:
-            print(f"Certificado com referência {num_ref} não encontrado")
-            raise Http404
-        except Exception as e:
-            print(f"Erro ao buscar certificado: {str(e)}")
-            raise Http404
+            return Response({"detail": "Certificado não encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
-    def get(self, request, num_ref):
-        certif = self.get_object_reg(num_ref)
-        serializer = CertificadoRegistoSerializer(certif)
-        return Response(serializer.data)
+class TodasSolicitacoes(APIView):
+    def get(self, request, *args, **kwargs):
+        list_some = SolicitarRegisto.objects.all()
+        serializer = SolicitarRegistoSerializer(list_some, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CreateNewCriminalRecords(APIView):
+    def post(self, request, *args, **kwargs):
+
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
+        pessoa = Cidadao.objects.get(id=request.data['cidadao'])
+
+        if SolicitarRegisto.objects.filter(id=request.data['id']).exists():
+            SolicitarRegisto.objects.filter(id=request.data['id']).update(
+                estado = "APROVADO"
+            )
+
+        RegistoCriminal.objects.create(
+            cidadao = pessoa,
+            cumprido = request.data['cidadao'],
+            data_ocorrencia = request.data['data_ocorrencia'],
+            data_setenca = request.data['data_setenca'],
+            numero_processo = timestamp,
+            observacao = request.data['observacao'],
+            setenca = request.data['setenca'],
+            tipo_ocorrencia = request.data['tipo_ocorrencia'],
+            tribunal = request.data['tribunal'],
+        )
+
+        return Response(status=status.HTTP_200_OK)
     
