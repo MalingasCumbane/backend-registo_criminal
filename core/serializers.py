@@ -9,8 +9,14 @@ class CidadaoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class SolicitarRegistoSerializer(serializers.ModelSerializer):
+class SolicitarRegistoSerializerUpdated(serializers.ModelSerializer):
     cidadao = CidadaoSerializer()
+    class Meta:
+        model = SolicitarRegisto
+        fields = '__all__'
+        
+class SolicitarRegistoSerializer(serializers.ModelSerializer):
+    # cidadao = CidadaoSerializer()
     class Meta:
         model = SolicitarRegisto
         fields = '__all__'

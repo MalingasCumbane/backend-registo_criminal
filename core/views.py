@@ -4,7 +4,7 @@ from django.views import View
 from http.client import HTTPResponse
 import os
 from django.shortcuts import render
-from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, SolicitarRegistoSerializer
+from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, SolicitarRegistoSerializer, SolicitarRegistoSerializerUpdated
 from core.serializers import CertificadoRegistoSerializer, CidadaoDetailSerializer, RegistoCriminalSerializer, SolicitarRegistoSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -246,7 +246,7 @@ class RecordDetailsByReference(APIView):
 class TodasSolicitacoes(APIView):
     def get(self, request, *args, **kwargs):
         list_some = SolicitarRegisto.objects.all()
-        serializer = SolicitarRegistoSerializer(list_some, many=True)
+        serializer = SolicitarRegistoSerializerUpdated(list_some, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -5,7 +5,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from users.services import BIAPIClient, create_or_update_citizen
+from users.services import BIAPIClient
 from .serializers import LoginSerializer, UserSerializer
 from .serializers import *
 from .models import Cidadao
@@ -71,7 +71,6 @@ class CidadaoSearchAPIView(generics.ListAPIView):
     serializer_class = CidadaoSerializer
 
     def get_queryset(self):
-        print("entrou para aquilo mesmo")
         search_query = self.request.query_params.get('q', '').strip()
         search_type = self.request.query_params.get('type', 'bi')
         
@@ -80,22 +79,22 @@ class CidadaoSearchAPIView(generics.ListAPIView):
         if search_query:
             Searches.objects.create(identifier=search_query)
             
-            # Se for busca por BI, tenta atualizar os dados primeiro
             if search_type == 'bi':
-                print("INDO BI")
-                # Busca dados na API externa
-                bi_data = BIAPIClient.fetch_citizen_data(search_query)
+                # Verifica se existe localmente
+                exists_locally = queryset.filter(numero_bi_nuit__iexact=search_query).exists()
                 
-                if bi_data:
-                    # Salva/atualiza no banco de dados
-                    create_or_update_citizen(bi_data)
+                if not exists_locally:
+                    # Busca dados na API externa apenas se não existir localmente
+                    bi_data = BIAPIClient.fetch_citizen_data(search_query)
+                    if bi_data:
+                        BIAPIClient.create_citizen_if_not_exists(bi_data)
                 
                 queryset = queryset.filter(Q(numero_bi_nuit__icontains=search_query))
             else:
-                print("ID NOME")
                 queryset = queryset.filter(Q(full_name__icontains=search_query))
         
         return queryset.order_by('full_name')
+
     
     def list(self, request, *args, **kwargs):
         try:
