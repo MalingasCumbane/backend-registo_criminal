@@ -1,14 +1,15 @@
 
 
 import requests
-from django.conf import settings
+
+from regcriminal import settings
+# from django.conf import settings
 from .models import Cidadao
 
 class BIAPIClient:
     @staticmethod
     def fetch_citizen_data(bi_number):
         try:
-            print("passsando o reg")
             response = requests.get(
                 f"{settings.BI_API_URL}?bi_number={bi_number}",
                 headers={'Authorization': f'Bearer {settings.BI_API_TOKEN}'},
@@ -40,7 +41,9 @@ class BIAPIClient:
                 local_emissao_bi=bi_data.get('emitido_em'),
                 data_emissao_bi=bi_data.get('data_emissao'),
                 data_validade_bi=bi_data.get('valido_ate'),
-                # Outros campos...
+                nome_pai= bi_data.get('nome_pai'),
+                nome_mae= bi_data.get('nome_mae'),
+
             )
             return citizen
         except Exception as e:
