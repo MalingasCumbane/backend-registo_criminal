@@ -29,7 +29,6 @@ class BIAPIClient:
             if Cidadao.objects.filter(full_name__iexact=bi_data['nome']).exists():
                 return None
                 
-            # Cria novo registro
             citizen = Cidadao.objects.create(
                 numero_bi_nuit=bi_data['bi_number'],
                 full_name=bi_data['nome_completo'],
