@@ -257,8 +257,7 @@ class CreateNewCriminalRecords(APIView):
     def post(self, request, *args, **kwargs):
 
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-
-        pessoa = Cidadao.objects.get(id=request.data['cidadao'])
+        person = Cidadao.objects.get(id=request.data['cidadao'])
 
         if SolicitarRegisto.objects.filter(id=request.data['id']).exists():
             SolicitarRegisto.objects.filter(id=request.data['id']).update(
@@ -266,7 +265,7 @@ class CreateNewCriminalRecords(APIView):
             )
 
         RegistoCriminal.objects.create(
-            cidadao = pessoa,
+            cidadao = person,
             cumprido = request.data['cidadao'],
             data_ocorrencia = request.data['data_ocorrencia'],
             data_setenca = request.data['data_setenca'],
