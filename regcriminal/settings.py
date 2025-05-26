@@ -161,3 +161,6 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 CSRF_COOKIE_SECURE = False  # Apenas para desenvolvimento
+
+BI_API_URL = 'https://api.exemplo.gov.mz/bi'
+BI_API_TOKEN = 'seu_token_aqui'

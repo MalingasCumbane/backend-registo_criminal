@@ -5,6 +5,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from users.services import BIAPIClient, create_or_update_citizen
 from .serializers import LoginSerializer, UserSerializer
 from .serializers import *
 from .models import Cidadao
@@ -65,36 +66,50 @@ class LoginView(GenericAPIView):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    
 class CidadaoSearchAPIView(generics.ListAPIView):
     permission_classes = []
     serializer_class = CidadaoSerializer
 
     def get_queryset(self):
-
-        search_query = self.request.query_params.get('q', '')
+        print("entrou para aquilo mesmo")
+        search_query = self.request.query_params.get('q', '').strip()
         search_type = self.request.query_params.get('type', 'bi')
         
         queryset = Cidadao.objects.all()
         
         if search_query:
             Searches.objects.create(identifier=search_query)
+            
+            # Se for busca por BI, tenta atualizar os dados primeiro
             if search_type == 'bi':
-                print("")
-                queryset = queryset.filter( Q(numero_bi_nuit__icontains=search_query) )
+                print("INDO BI")
+                # Busca dados na API externa
+                bi_data = BIAPIClient.fetch_citizen_data(search_query)
+                
+                if bi_data:
+                    # Salva/atualiza no banco de dados
+                    create_or_update_citizen(bi_data)
+                
+                queryset = queryset.filter(Q(numero_bi_nuit__icontains=search_query))
             else:
-                queryset = queryset.filter( Q(full_name__icontains=search_query) )
+                print("ID NOME")
+                queryset = queryset.filter(Q(full_name__icontains=search_query))
         
         return queryset.order_by('full_name')
     
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            
+            # Força a avaliação da queryset para garantir que a busca foi feita
+            count = queryset.count()
+            
+            # Serializa os resultados
             serializer = self.get_serializer(queryset, many=True)
             
             return Response({
                 'success': True,
-                'count': queryset.count(),
+                'count': count,
                 'results': serializer.data
             })
             
@@ -103,6 +118,45 @@ class CidadaoSearchAPIView(generics.ListAPIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    
+# class CidadaoSearchAPIView(generics.ListAPIView):
+    # permission_classes = []
+    # serializer_class = CidadaoSerializer
+
+    # def get_queryset(self):
+
+    #     search_query = self.request.query_params.get('q', '')
+    #     search_type = self.request.query_params.get('type', 'bi')
+        
+    #     queryset = Cidadao.objects.all()
+        
+    #     if search_query:
+    #         Searches.objects.create(identifier=search_query)
+    #         if search_type == 'bi':
+    #             print("")
+    #             queryset = queryset.filter( Q(numero_bi_nuit__icontains=search_query) )
+    #         else:
+    #             queryset = queryset.filter( Q(full_name__icontains=search_query) )
+        
+    #     return queryset.order_by('full_name')
+    
+    # def list(self, request, *args, **kwargs):
+    #     try:
+    #         queryset = self.get_queryset()
+    #         serializer = self.get_serializer(queryset, many=True)
+            
+    #         return Response({
+    #             'success': True,
+    #             'count': queryset.count(),
+    #             'results': serializer.data
+    #         })
+            
+    #     except Exception as e:
+    #         return Response({
+    #             'success': False,
+    #             'error': str(e)
+    #         }, status=status.HTTP_400_BAD_REQUEST)
 
 class CidadaoDetailView(APIView):
     permission_classes = [IsAuthenticated]

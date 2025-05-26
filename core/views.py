@@ -211,19 +211,17 @@ class CertificadoDetailView(generics.RetrieveAPIView):
 class DashboardStatsAPIView(APIView):
     def get(self, request):
         try:
+            
+            all_records = RegistoCriminal.objects.all().order_by('-id')
+            serializer = RegistoCriminalSerializer(all_records, many=True)
+
             total_searches = Searches.objects.count()
-
-            total_cidadaos_processados = Cidadao.objects.annotate(
-                num_registos=Count('registos_criminais')
-            ).filter(num_registos__gt=0).count()
-
+            total_cidadaos_processados = Cidadao.objects.annotate(num_registos=Count('registos_criminais')).filter(num_registos__gt=0).count()
             total_registos_emitidos = RegistoCriminal.objects.count()
-
-            total_registos_limpos = Cidadao.objects.annotate(
-                num_registos=Count('registos_criminais')
-            ).filter(num_registos=0).count()
+            total_registos_limpos = Cidadao.objects.annotate(num_registos=Count('registos_criminais')).filter(num_registos=0).count()
 
             data = {
+                'all_registers': serializer.data,
                 'registos_emitidos': total_registos_emitidos,
                 'pesquisas_realizadas': total_searches,
                 'cidadaos_processados': total_cidadaos_processados,
