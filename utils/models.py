@@ -36,8 +36,7 @@ class LifeCycle(Abstract):
         abstract = True
 
 
-class LifeCycleCode(LifeCycle):
-    code = models.CharField(("Codigo"), max_length=50, unique=True)
+class LifeCycleDescription(LifeCycle):
     description = models.CharField(("Descricao"), max_length=50)
 
     class Meta:

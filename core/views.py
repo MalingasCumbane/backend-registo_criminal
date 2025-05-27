@@ -13,7 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 import datetime
-from users.models import Cidadao
+from users.models import Cidadao, Permission, UserPermissions
+from users.serializers import UserPermissionsSerializer
 from .models import RegistoCriminal, Searches, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
 from django.contrib.auth.models import User
 from django.db.models import Count
@@ -274,3 +275,10 @@ class CreateNewCriminalRecords(APIView):
         )
 
         return Response(status=status.HTTP_200_OK)
+    
+
+class GetUserPermission(APIView):
+    def post(self, request, *args, **kwargs):
+        list_det = UserPermissions.objects.filter(utilizador__id=request.user.id)
+        serializer = UserPermissionsSerializer(list_det, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

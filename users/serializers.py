@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cidadao, User
+from .models import Cidadao, Permission, User, UserPermissions
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +20,15 @@ class LoginSerializer(serializers.Serializer):
         model = User
         fields = ('password', 'token')
         read_only_fields = ['token']
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permission
+        fields = ['description']
+
+class UserPermissionsSerializer(serializers.ModelSerializer):
+    role = PermissionSerializer()
+    class Meta:
+        model = UserPermissions
+        fields = ['role']

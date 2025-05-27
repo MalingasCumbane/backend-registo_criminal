@@ -1,12 +1,13 @@
 from django.urls import path, include
 from users.views import CidadaoSearchAPIView, LoginView
 from users.views import CidadaoDetailView
-from core.views import CertificadoDetailView, CreateNewCriminalRecords, CriminalRecordListView, DashboardStatsAPIView, GerarCertificadoView, RecordDetailsByReference, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, TodasSolicitacoes, get_cidadao_registos
+from core.views import CertificadoDetailView, CreateNewCriminalRecords, CriminalRecordListView, DashboardStatsAPIView, GerarCertificadoView, GetUserPermission, RecordDetailsByReference, RecordStatsView, SolicitarRegistoListCreateView, SolicitarRegistoDetailView, TodasSolicitacoes, get_cidadao_registos
 
 app_name = "api"
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
-    
+    path('user/permission/', GetUserPermission.as_view(), name='user-permission'),
+
     path('pesquisar/cidadaos/<str:bi>/', CidadaoDetailView.as_view(), name='cidadao-detail'), # get ID details
     path('cidadaos/<str:id>/registos/', get_cidadao_registos, name='cidadao-registos'), # Buscar registos criminais do Cidadao atraves do ID dele
 
@@ -27,4 +28,5 @@ urlpatterns = [
     path('dashboard-stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
 
     path('criminal-new-records/', CreateNewCriminalRecords.as_view(), name='new-records'),
+
 ]
