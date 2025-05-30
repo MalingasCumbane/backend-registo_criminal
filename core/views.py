@@ -1,3 +1,4 @@
+import random
 from django.http import Http404
 from django.http import FileResponse
 from django.views import View
@@ -13,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 import datetime
+from django.db import transaction
 from users.models import Cidadao, Permission, UserPermissions
 from users.serializers import UserPermissionsSerializer
 from .models import RegistoCriminal, Searches, SolicitarRegisto, Pagamento, CertificadoRegisto, RegistoCriminal
@@ -135,7 +137,6 @@ class GerarCertificadoView(generics.CreateAPIView):
             funcionario_emissor=request.user.funcionario
         )
 
-        # Atualizar estado da solicitação
         solicitacao.estado = 'APROVADO'
         solicitacao.save()
 
@@ -238,7 +239,10 @@ class DashboardStatsAPIView(APIView):
 class RecordDetailsByReference(APIView):
     def post(self, request):
         try:
-            certif = CertificadoRegisto.objects.get(numero_referencia=request.data['num_ref'])
+            if 'get_certificate' in request.data:
+                certif = CertificadoRegisto.objects.get(id=request.data['certificate_id'])
+            else:
+                certif = CertificadoRegisto.objects.get(numero_referencia=request.data['num_ref'])
             serializer = CertificadoRegistoSerializer(certif)
             return Response(serializer.data)
         except CertificadoRegisto.DoesNotExist:
@@ -246,33 +250,77 @@ class RecordDetailsByReference(APIView):
 
 class TodasSolicitacoes(APIView):
     def get(self, request, *args, **kwargs):
-        list_some = SolicitarRegisto.objects.all()
+        list_some = SolicitarRegisto.objects.all().order_by('-id')
         serializer = SolicitarRegistoSerializerUpdated(list_some, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CreateNewCriminalRecords(APIView):
     def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+            person = Cidadao.objects.get(id=request.data['cidadao'])
 
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-        person = Cidadao.objects.get(id=request.data['cidadao'])
+            # Atualizar o estado da solicitação
+            if SolicitarRegisto.objects.filter(id=request.data['id']).exists():
+                SolicitarRegisto.objects.filter(id=request.data['id']).update(
+                    estado="APROVADO"
+                )
 
-        if SolicitarRegisto.objects.filter(id=request.data['id']).exists():
-            SolicitarRegisto.objects.filter(id=request.data['id']).update(
-                estado = "APROVADO"
+            RegistoCriminal.objects.create(
+                cidadao=person,
+                cumprido=request.data['cumprido'],
+                data_ocorrencia=request.data['data_ocorrencia'],
+                data_setenca=request.data['data_setenca'],
+                numero_processo=timestamp,
+                observacao=request.data['observacao'],
+                setenca=request.data['setenca'],
+                tipo_ocorrencia=request.data['tipo_ocorrencia'],
+                tribunal=request.data['tribunal'],
             )
 
-        RegistoCriminal.objects.create(
-            cidadao = person,
-            cumprido = request.data['cidadao'],
-            data_ocorrencia = request.data['data_ocorrencia'],
-            data_setenca = request.data['data_setenca'],
-            numero_processo = timestamp,
-            observacao = request.data['observacao'],
-            setenca = request.data['setenca'],
-            tipo_ocorrencia = request.data['tipo_ocorrencia'],
-            tribunal = request.data['tribunal'],
-        )
+            solicitacao = SolicitarRegisto.objects.select_related('cidadao').get(id=request.data['solicitacao']['id'])
+
+            registos = solicitacao.cidadao.registos_criminais.all()
+            tem_registos = registos.exists()
+
+            conteudo = {
+                "cidadao": {
+                    "nome": solicitacao.cidadao.full_name,
+                    "bi": solicitacao.cidadao.numero_bi_nuit,
+                    "nascimento": solicitacao.cidadao.data_nascimento.strftime('%Y-%m-%d') if solicitacao.cidadao.data_nascimento else None,
+                    "endereco": solicitacao.cidadao.endereco,
+                    "nacionalidade": solicitacao.cidadao.nacionalidade,
+                    "naturalidade": solicitacao.cidadao.naturalidade,
+                    "nome_pai": solicitacao.cidadao.nome_pai,
+                    "nome_mae": solicitacao.cidadao.nome_mae
+                },
+                "tem_registos": tem_registos,
+                "registos": [
+                    {
+                        "processo": r.numero_processo,
+                        "data": r.data_ocorrencia.strftime('%Y-%m-%d') if r.data_ocorrencia else None,
+                        "tribunal": r.tribunal,
+                        "tipo": r.tipo_ocorrencia,
+                        "sentenca": r.setenca,
+                        "data_sentenca": r.data_setenca.strftime('%Y-%m-%d') if r.data_setenca else None
+                    } for r in registos
+                ],
+                "validade": (datetime.date.today() + datetime.timedelta(days=90)).strftime('%Y-%m-%d'),
+                "data_emissao": datetime.date.today().strftime('%Y-%m-%d'),
+                "finalidade": solicitacao.finalidade,
+            }
+
+            conteudo['numero_referencia'] = f"CRC-{datetime.date.today().year}-{random.randint(1000, 9999)}"
+
+            CertificadoRegisto.objects.create(
+                solicitacao=solicitacao,
+                numero_referencia=conteudo['numero_referencia'],
+                data_validade=conteudo['validade'],
+                conteudo=conteudo,
+                estado_certificado='VALIDO',
+                funcionario_emissor=request.user.funcionario
+            )
 
         return Response(status=status.HTTP_200_OK)
     
@@ -282,3 +330,33 @@ class GetUserPermission(APIView):
         list_det = UserPermissions.objects.filter(utilizador__id=request.user.id)
         serializer = UserPermissionsSerializer(list_det, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+@api_view(['GET'])
+def verificar_certificado(request, cidadao_id):
+    try:
+        # Verifica se existe solicitação aprovada para o cidadão
+        solicitacao = SolicitarRegisto.objects.filter(
+            cidadao_id=cidadao_id,
+            estado='APROVADO'
+        ).first()
+        
+        if not solicitacao:
+            return Response({
+                'has_request': False,
+                'is_approved': False,
+                'has_certificate': False
+            })
+        
+        # Verifica se existe certificado para a solicitação
+        certificado = CertificadoRegisto.objects.filter(solicitacao=solicitacao).first()
+        
+        return Response({
+            'has_request': True,
+            'is_approved': True,
+            'has_certificate': certificado is not None,
+            'certificate_id': certificado.id if certificado else None
+        })
+    except Exception as e: 
+        return Response({ 'error': str(e) }, status=400)
