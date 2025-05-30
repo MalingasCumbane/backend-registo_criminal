@@ -29,6 +29,7 @@ class SolicitarRegisto(LifeCycle):
         ('CANCELADO', 'Cancelado'),
     ]
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='PENDENTE')
+    telefone = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return f"Solicitação #{self.id} - {self.cidadao}"

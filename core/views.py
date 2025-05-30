@@ -85,13 +85,10 @@ class GerarCertificadoView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         solicitacao = get_object_or_404(SolicitarRegisto, pk=kwargs['pk'])
 
-        # Verificar se já existe certificado
         if hasattr(solicitacao, 'certificado'):
-            # Se existir, retornar os detalhes do certificado existente
             certificado_existente = solicitacao.certificado
             serializer = self.get_serializer(certificado_existente)
 
-            # Adicionar mensagem informativa na resposta
             response_data = serializer.data
             response_data['message'] = 'Certificado já existente - retornando dados do certificado anterior'
 
@@ -100,7 +97,6 @@ class GerarCertificadoView(generics.CreateAPIView):
                 status=status.HTTP_200_OK
             )
 
-        # Se não existir, criar novo certificado
         registos = solicitacao.cidadao.registos_criminais.all()
         tem_registos = registos.exists()
 
@@ -126,7 +122,6 @@ class GerarCertificadoView(generics.CreateAPIView):
             "data_emissao": datetime.date.today().strftime('%Y-%m-%d')
         }
 
-        # Gerar número de referência único
         numero_referencia = self.gerar_numero_referencia(solicitacao)
         
         certificado = CertificadoRegisto.objects.create(
@@ -144,7 +139,6 @@ class GerarCertificadoView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def gerar_numero_referencia(self, solicitacao):
-        """Gera um número de referência único para o certificado"""
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         return f"CR-{solicitacao.id}-{timestamp}"
 
@@ -321,6 +315,8 @@ class CreateNewCriminalRecords(APIView):
                 estado_certificado='VALIDO',
                 funcionario_emissor=request.user.funcionario
             )
+
+            
 
         return Response(status=status.HTTP_200_OK)
     
