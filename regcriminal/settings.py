@@ -162,5 +162,5 @@ CORS_ALLOW_METHODS = [
 ]
 CSRF_COOKIE_SECURE = False  # Apenas para desenvolvimento
 
-BI_API_URL = 'https://api.exemplo.gov.mz/bi'
+BI_API_URL = 'http://192.168.43.66:8000/api/bi/'
 BI_API_TOKEN = 'seu_token_aqui'

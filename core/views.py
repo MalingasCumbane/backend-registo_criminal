@@ -24,6 +24,7 @@ from .models import SolicitarRegisto, Pagamento, CertificadoRegisto
 from django.db.models import Count
 from django.utils import timezone
 import requests
+from datetime import datetime, timedelta
 from django.db.models import Q
 from rest_framework.decorators import api_view, action
 viewsets.ModelViewSet
@@ -68,14 +69,113 @@ class SolicitarRegistoListCreateView(APIView):
         solicitacoes = SolicitarRegisto.objects.filter(cidadao__id=id)
         serializer = SolicitarRegistoSerializer(solicitacoes, many=True)
         return Response(serializer.data)
+    
 
     def post(self, request, id):
+        print("detalhes da sessao: ", request.data)
         serializer = SolicitarRegistoSerializer(data=request.data)
+        
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                # Salva a solicitação primeiro
+                solicitacao = serializer.save()
+                
+                # Gera o número de referência
+                numero_referencia = f"CRC-{solicitacao.id}-{datetime.now().strftime('%Y%m%d')}"
+                
+                # Cria um registo criminal vazio/padrão
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                registo_criminal = RegistoCriminal.objects.create(
+                    cidadao=solicitacao.cidadao,
+                    numero_processo=timestamp,  # Usa timestamp como número do processo
+                    data_ocorrencia=datetime.now().date(),  # Data atual como padrão
+                    tipo_ocorrencia='INFRACCAO',  # Valor padrão
+                    tribunal='Tribunal Judicial da Comarca',  # Valor padrão
+                    setenca='Sem sentença definida',  # Valor padrão
+                    data_setenca=datetime.now().date(),  # Data atual como padrão
+                    cumprido=False,  # Valor padrão
+                    observacao='Registo criado automaticamente para certificado'  # Valor padrão
+                )
+                
+                # Verifica se existem registros criminais
+                registos = solicitacao.cidadao.registos_criminais.all()
+                tem_registos = registos.exists()
+                
+                # Cria o conteúdo do certificado com informações do registo criminal
+                conteudo = {
+                    'cidadao_id': solicitacao.cidadao.id,
+                    'cidadao_nome': solicitacao.cidadao.full_name,
+                    'finalidade': solicitacao.finalidade,
+                    'data_emissao': datetime.now().isoformat(),
+                    'numero_referencia': numero_referencia,
+                    'tem_registos': tem_registos,
+                    'registos': [
+                        {
+                            'processo': r.numero_processo,
+                            'data': r.data_ocorrencia.strftime('%Y-%m-%d'),
+                            'tribunal': r.tribunal,
+                            'tipo': r.tipo_ocorrencia,
+                            'sentenca': r.setenca,
+                            'data_sentenca': r.data_setenca.strftime('%Y-%m-%d')
+                        } for r in registos
+                    ]
+                }
+                
+                # Cria o certificado associado à solicitação
+                certificado = CertificadoRegisto.objects.create(
+                    solicitacao=solicitacao,
+                    numero_referencia=numero_referencia,
+                    data_validade=datetime.now() + timedelta(days=90),  # Validade de 90 dias
+                    conteudo=conteudo,
+                    estado_certificado='VALIDO',
+                    funcionario_emissor=request.user.funcionario
+                )
+                
+                # Atualiza a resposta para incluir informações do certificado e do registo criminal
+                response_data = serializer.data
+                response_data['certificado'] = {
+                    'id': certificado.id,
+                    'numero_referencia': certificado.numero_referencia,
+                    'data_validade': certificado.data_validade
+                }
+                response_data['registo_criminal'] = {
+                    'id': registo_criminal.id,
+                    'numero_processo': registo_criminal.numero_processo
+                }
+                
+                # Opcional: Enviar SMS de confirmação
+                try:
+                    rmsg = f"Seu certificado com referência {numero_referencia} foi emitido com sucesso."
+                    data = {
+                        "msisdn": "258"+str(solicitacao.telefone),
+                        "msg": rmsg,
+                        "sender": "1727"
+                    }
+                    requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data, headers={'Content-Type': 'application/json'})
+                except:
+                    pass  # Falha silenciosa no envio do SMS
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    # def post(self, request, id):
+    #     print("detalhes da sessao: ", request.data)
+    #     serializer = SolicitarRegistoSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         CertificadoRegisto.objects.create(
+    #             solicitacao=solicitacao,
+    #             numero_referencia=conteudo['numero_referencia'],
+    #             data_validade=conteudo['validade'],
+    #             conteudo=conteudo,
+    #             estado_certificado='VALIDO',
+    #             funcionario_emissor=request.user.funcionario
+    #         )
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CidadaoDetailView(generics.RetrieveAPIView):
@@ -324,7 +424,7 @@ class CreateNewCriminalRecords(APIView):
             )
             rmsg = "O seu registo criminal com referencia: " + str(conteudo['numero_referencia']) + ". Foi tramitado com sucesso."
             data = {
-                "msisdn": solicitacao.telefone,
+                "msisdn": "258"+str(solicitacao.telefone),
                 "msg": rmsg,
                 "sender": "1727"
             }
@@ -333,7 +433,7 @@ class CreateNewCriminalRecords(APIView):
             
             if resp.status_code != 200:
                 data_optional = {
-                    'msisdn': solicitacao.telefone,
+                    'msisdn': "258"+str(solicitacao.telefone),
                     'message': rmsg,
                     'sender_carrier': 'STM'
                 }

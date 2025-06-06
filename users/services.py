@@ -11,7 +11,7 @@ class BIAPIClient:
     def fetch_citizen_data(bi_number):
         try:
             response = requests.get(
-                f"{settings.BI_API_URL}?bi_number={bi_number}",
+                f"{settings.BI_API_URL}{bi_number}",
                 headers={'Authorization': f'Bearer {settings.BI_API_TOKEN}'},
                 timeout=10
             )
@@ -23,20 +23,26 @@ class BIAPIClient:
         
     def create_citizen_if_not_exists(bi_data):
         try:
-            if Cidadao.objects.filter(numero_bi_nuit=bi_data['bi']).exists():
+            if Cidadao.objects.filter(numero_bi_nuit=bi_data['bi_number']).exists():
                 return None
                 
-            if Cidadao.objects.filter(full_name__iexact=bi_data['nome']).exists():
+            if Cidadao.objects.filter(full_name__iexact=bi_data['nome_completo']).exists():
                 return None
+            
+            print("bi_data.get('naturalidade'): ===: ", bi_data.get('naturalidade'))
                 
             citizen = Cidadao.objects.create(
                 numero_bi_nuit=bi_data['bi_number'],
                 full_name=bi_data['nome_completo'],
                 data_nascimento=bi_data['data_nascimento'],
+                endereco=bi_data['residencia'],
+                provincia=bi_data['naturalidade'],
                 naturalidade=bi_data.get('naturalidade'),
                 estado_civil=bi_data.get('estado_civil'),
                 residencia=bi_data.get('residencia'),
                 sexo=bi_data.get('sexo'),
+                distrito=bi_data.get('naturalidade'),
+                
                 local_emissao_bi=bi_data.get('emitido_em'),
                 data_emissao_bi=bi_data.get('data_emissao'),
                 data_validade_bi=bi_data.get('valido_ate'),
@@ -44,7 +50,9 @@ class BIAPIClient:
                 nome_mae= bi_data.get('nome_mae'),
 
             )
+
             return citizen
         except Exception as e:
             print(f"Erro ao criar cidadão: {str(e)}")
             return None
+        

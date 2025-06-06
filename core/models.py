@@ -31,7 +31,7 @@ class SolicitarRegisto(LifeCycle):
         ('REJEITADO', 'Rejeitado'),
         ('CANCELADO', 'Cancelado'),
     ]
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='PENDENTE')
+    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='APROVADO')
     telefone = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
