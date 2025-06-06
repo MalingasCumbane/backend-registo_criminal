@@ -10,14 +10,17 @@ class SolicitarRegisto(LifeCycle):
     FINALIDADE_CHOICES = [
         ('EMPREGO', 'Emprego'),
         ('VIAGEM', 'Viagem'),
+        ('CARTACONDUCAO', 'Carta'),
         ('OUTRO', 'Outro'),
     ]
     finalidade = models.CharField(max_length=50, choices=FINALIDADE_CHOICES)
     agencia = models.CharField(max_length=100)
     FORMA_PAGAMENTO_CHOICES = [
-        ('MBWAY', 'MBWay'),
-        ('TRANSFERENCIA', 'Transferência Bancária'),
-        ('DINHEIRO', 'Dinheiro'),
+        ('EMOLA', 'Emola'),
+        ('MPESA', 'Transferência Bancária'),
+        ('NUMERARIO', 'Numerário'),
+        ('PAYPAL', 'Paypal'),
+        ('VISA', 'Visa'),
     ]
     forma_pagamento = models.CharField(max_length=50, choices=FORMA_PAGAMENTO_CHOICES)
     pago = models.BooleanField(default=False)

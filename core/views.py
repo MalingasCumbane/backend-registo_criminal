@@ -23,9 +23,16 @@ from django.db.models import Count
 from .models import SolicitarRegisto, Pagamento, CertificadoRegisto
 from django.db.models import Count
 from django.utils import timezone
+import requests
 from django.db.models import Q
 from rest_framework.decorators import api_view, action
 viewsets.ModelViewSet
+
+
+defaultHeaders = {
+    'Content-type': 'application/json',
+    'Accept': 'application/json'
+    }
 
 
 class SolicitarRegistoDetailView(APIView):
@@ -315,8 +322,22 @@ class CreateNewCriminalRecords(APIView):
                 estado_certificado='VALIDO',
                 funcionario_emissor=request.user.funcionario
             )
-
+            rmsg = "O seu registo criminal com referencia: " + str(conteudo['numero_referencia']) + ". Foi tramitado com sucesso."
+            data = {
+                "msisdn": solicitacao.telefone,
+                "msg": rmsg,
+                "sender": "1727"
+            }
             
+            resp = requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data, headers=defaultHeaders)
+            
+            if resp.status_code != 200:
+                data_optional = {
+                    'msisdn': solicitacao.telefone,
+                    'message': rmsg,
+                    'sender_carrier': 'STM'
+                }
+                resp = requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data_optional, headers=defaultHeaders)
 
         return Response(status=status.HTTP_200_OK)
     
