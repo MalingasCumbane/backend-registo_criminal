@@ -144,16 +144,7 @@ class SolicitarRegistoListCreateView(APIView):
                 }
                 
                 # Opcional: Enviar SMS de confirmação
-                try:
-                    rmsg = f"Seu certificado com referência {numero_referencia} foi emitido com sucesso."
-                    data = {
-                        "msisdn": "258"+str(solicitacao.telefone),
-                        "msg": rmsg,
-                        "sender": "1727"
-                    }
-                    requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data, headers={'Content-Type': 'application/json'})
-                except:
-                    pass  # Falha silenciosa no envio do SMS
+                
                 
                 return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -422,23 +413,7 @@ class CreateNewCriminalRecords(APIView):
                 estado_certificado='VALIDO',
                 funcionario_emissor=request.user.funcionario
             )
-            rmsg = "O seu registo criminal com referencia: " + str(conteudo['numero_referencia']) + ". Foi tramitado com sucesso."
-            data = {
-                "msisdn": "258"+str(solicitacao.telefone),
-                "msg": rmsg,
-                "sender": "1727"
-            }
             
-            resp = requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data, headers=defaultHeaders)
-            
-            if resp.status_code != 200:
-                data_optional = {
-                    'msisdn': "258"+str(solicitacao.telefone),
-                    'message': rmsg,
-                    'sender_carrier': 'STM'
-                }
-                resp = requests.post('http://162.0.237.160:4522/api/sms/send_dynamic_sms_by_carrier/', json=data_optional, headers=defaultHeaders)
-
         return Response(status=status.HTTP_200_OK)
     
 
